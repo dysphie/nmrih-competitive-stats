@@ -1,27 +1,39 @@
 Work-in-progress, basic overview:
 
-POST /mutators { name, points_multiplier, cvars: [ { name, value }, ... ] }
-GET /mutators
-GET /mutators/:id
+`POST` `/mutators` { `name`, `points_multiplier`, `cvars`: [ { `name`, `value` }, ... ] }
 
-POST /tiers { name, points }
-GET /tiers
+`GET` `/mutators`
 
-POST /players { name, steam }
-GET /players { q }
-GET /players/:id
+`GET` `/mutators/:id`
 
-POST /maps { name, file, tier }
-GET /maps { q }
-GET /maps/:id
+`POST` `/tiers` { `name`, `points` }
 
-POST /rounds { map }
-GET /rounds { offset, limit, player, map, sort }
-GET /rounds/:id 
+`GET` `/tiers`
 
-POST /performances { player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned }
-GET /performances/:id
+`POST` `/players` { `name`, `steam` }
 
-GET /leaderboards/exp
-GET /leaderboards/kills
-GET /leaderboards/kdr
+`GET` `/players` { `q` }
+
+`GET` `/players/:id`
+
+`POST` `/maps` { `name`, `file`, `tier` }
+
+`GET` `/maps` { `q` }
+
+`GET` `/maps/:id`
+
+`POST` `/rounds` { `map` }
+
+`GET` `/rounds` { `offset`, `limit`, `player`, `map`, `sort` }
+
+`GET` `/rounds/:id` 
+
+`POST` `/performances` { `player`, `round`, `end_reason`, `kills`, `deaths`, `damage_taken`, `extraction_time`, `presence`, `exp_earned` }
+
+`GET` `/performances/:id`
+
+`GET` `/leaderboards/exp`
+
+`GET` `/leaderboards/kills`
+
+`GET` `/leaderboards/kdr`
