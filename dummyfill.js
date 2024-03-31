@@ -24,7 +24,7 @@ async function insertDummyData () {
     console.log(`Inserting ${NUM_PLAYERS} players...`)
     for (let i = 0; i < NUM_PLAYERS; i++) {
       await db.execute(`
-        INSERT INTO player (steam_id, username) 
+        INSERT INTO player (steam_id, name) 
         VALUES (?, ?)
     `, [100000000 + i, 'Player' + i])
     }

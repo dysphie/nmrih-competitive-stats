@@ -17,7 +17,6 @@ router.post('/', [
   try {
     const { name, points } = req.body
     const id = await registerTier(name, points)
-    console.log('got back id ' + id)
     res.status(200).json({ id })
   } catch (error) {
     console.log('Error occurred while registering tier:', error)

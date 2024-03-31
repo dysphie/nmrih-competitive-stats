@@ -2,6 +2,38 @@ import pool from './database.js'
 
 const views = {}
 
+const dropAll = async () => {
+  const db = await pool.getConnection();
+  try {
+    await db.beginTransaction();
+
+    // drop views
+    await db.execute(`DROP VIEW IF EXISTS leaderboard_most_kills`)
+    await db.execute(`DROP VIEW IF EXISTS leaderboard_highest_kd_ratio`)
+    await db.execute(`DROP VIEW IF EXISTS leaderboard_most_exp`)
+
+    // drop tables with dependencies first
+    await db.execute(`DROP TABLE IF EXISTS npc_kill`);
+    await db.execute(`DROP TABLE IF EXISTS round_modifier`);
+    await db.execute(`DROP TABLE IF EXISTS performance`);
+    await db.execute(`DROP TABLE IF EXISTS round`);
+
+    // drop other tables
+    await db.execute(`DROP TABLE IF EXISTS modifier_cvar`);
+    await db.execute(`DROP TABLE IF EXISTS modifier`);
+    await db.execute(`DROP TABLE IF EXISTS map`);
+    await db.execute(`DROP TABLE IF EXISTS map_tier`);
+    await db.execute(`DROP TABLE IF EXISTS player`);
+
+    await db.commit()
+  } catch (error) {
+    await db.rollback()
+    throw error
+  } finally {
+    db.release()
+  }
+}
+
 const createTables = async () => {
   const db = await pool.getConnection()
   try {
@@ -11,7 +43,7 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS player (
         id INT AUTO_INCREMENT PRIMARY KEY,
         steam_id BIGINT NOT NULL UNIQUE,
-        username VARCHAR(255) NOT NULL
+        name VARCHAR(255) NOT NULL
       )
     `)
 
@@ -111,7 +143,7 @@ const createTables = async () => {
 
     await db.execute(`
       CREATE VIEW IF NOT EXISTS leaderboard_most_kills AS
-      SELECT p.id AS player_id, p.username AS player_name, SUM(kills) AS total_kills,
+      SELECT p.id AS player_id, p.name AS player_name, SUM(kills) AS total_kills,
         ROW_NUMBER() OVER (ORDER BY SUM(kills) DESC) AS rank
       FROM performance perf
       INNER JOIN player p ON perf.player_id = p.id
@@ -122,7 +154,7 @@ const createTables = async () => {
 
     await db.execute(`
       CREATE VIEW IF NOT EXISTS leaderboard_highest_kd_ratio AS
-      SELECT p.id AS player_id, p.username AS player_name,
+      SELECT p.id AS player_id, p.name AS player_name,
         IF(SUM(deaths) = 0, SUM(kills), SUM(kills) / SUM(deaths)) AS kd_ratio,
         ROW_NUMBER() OVER (ORDER BY IF(SUM(deaths) = 0, SUM(kills), SUM(kills) / SUM(deaths)) DESC) AS rank
       FROM performance perf
@@ -134,7 +166,7 @@ const createTables = async () => {
 
     await db.execute(`
       CREATE VIEW IF NOT EXISTS leaderboard_most_exp AS
-      SELECT p.id AS player_id, p.username AS player_name, SUM(exp_earned) AS total_exp,
+      SELECT p.id AS player_id, p.name AS player_name, SUM(exp_earned) AS total_exp,
         ROW_NUMBER() OVER (ORDER BY SUM(exp_earned) DESC) AS rank
       FROM performance perf
       INNER JOIN player p ON perf.player_id = p.id
@@ -187,15 +219,15 @@ const getRoundHistory = async (limit = 10, offset = 0, ascending = true, playerI
     query += ' LIMIT ? OFFSET ?'
     queryParams.push(limit, offset)
 
-    ;[rounds] = await conn.query(query, queryParams)
+      ;[rounds] = await conn.query(query, queryParams)
 
     if (rounds.length < 1) return {}
 
     const roundIds = rounds.map(r => r.id)
-    ;[performances] = await conn.query(`
+      ;[performances] = await conn.query(`
       SELECT 
         p.*, 
-        pl.username AS player_name,
+        pl.name AS player_name,
         pl.id AS player_id
       FROM 
         performance AS p
@@ -240,7 +272,7 @@ const getRoundHistory = async (limit = 10, offset = 0, ascending = true, playerI
 }
 
 const searchPlayers = async (partialName) => {
-  const [players] = await pool.query('SELECT id, username FROM player WHERE username LIKE ? LIMIT 50;', [`%${partialName}%`])
+  const [players] = await pool.query('SELECT id, name FROM player WHERE name LIKE ? LIMIT 50;', [`%${partialName}%`])
   return players
 }
 
@@ -259,8 +291,8 @@ const registerTier = async (name, points) => {
   return tier.insertId
 }
 
-const registerPlayer = async (steamId, username) => {
-  const [player] = await pool.query('INSERT INTO player (steam_id, username) VALUES (?, ?)', [steamId, username])
+const registerPlayer = async (steamId, name) => {
+  const [player] = await pool.query('INSERT INTO player (steam_id, name) VALUES (?, ?)', [steamId, name])
   return player.insertId
 }
 
@@ -381,5 +413,6 @@ export {
   getRoundHistory,
   registerKills,
   registerTier,
-  getPlayer
+  getPlayer,
+  dropAll
 }
