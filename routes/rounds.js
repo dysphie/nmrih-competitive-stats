@@ -1,8 +1,29 @@
 import express from 'express'
-import { query, validationResult } from 'express-validator'
-import { getRoundHistory } from '../queries.js'
+import { body, query, validationResult } from 'express-validator'
+import { getRoundHistory, registerRound } from '../queries.js'
 
 const router = express.Router()
+
+router.post('/', [
+  body('map').isInt({ min: 1 })
+], async (req, res) => {
+  const errors = validationResult(req)
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() })
+  }
+
+  const { map } = req.body
+
+  try {
+    const id = await registerRound(map)
+    res.status(200).json({ id })
+  } catch (error) {
+    console.log('Error occurred while registering round: ', error)
+    res.sendStatus(500)
+  }
+})
+
 router.get('/', [
   query('offset').optional().isInt({ min: 0 }).toInt().default(0),
   query('limit').optional().isInt({ min: 1, max: 30 }).toInt().default(10),

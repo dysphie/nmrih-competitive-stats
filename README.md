@@ -1,14 +1,19 @@
 
 
+POST /maps { file, name, tier }
+GET /maps/search { partial_name }
+GET /maps/:id
 
-POST /matches { map_id }
-GET /matches { offset, limit, player, map, sort }
+POST /rounds { map_id }
+GET /rounds { offset, limit, player, map, sort }
 
-GET /players/search { term }
+GET /players/search { partial_name }
 GET /players/:id
+GET /players/:id/performances
+GET /players/:id/completions
 
-GET /players/:id/match_history
-GET /players/:id/completed_maps
+POST /tiers { name, points }
+GET /tiers
 
 
 

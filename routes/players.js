@@ -8,7 +8,6 @@ router.post('/', [
   body('steam').isLength({ min: 1 }),
   body('name').isLength({ min: 1 })
 ], async (req, res) => {
-
   const errors = validationResult(req)
 
   if (!errors.isEmpty()) {
@@ -46,7 +45,7 @@ router.get('/search', [
 })
 
 router.get('/:id', [
-  param('id').isInt({ min: 1 }).toInt(),
+  param('id').isInt({ min: 1 }).toInt()
 ], async (req, res, next) => {
   try {
     const errors = validationResult(req)
@@ -55,7 +54,7 @@ router.get('/:id', [
     }
 
     const { id } = req.params
-    const [player] = await getPlayer(id)
+    const player = await getPlayer(id)
 
     if (!player) {
       return res.sendStatus(404)

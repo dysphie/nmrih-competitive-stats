@@ -8,7 +8,6 @@ router.post('/', [
   body('name').optional().isLength({ min: 1 }),
   body('points').optional().isInt({ min: 0 }).toInt()
 ], async (req, res) => {
-
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() })

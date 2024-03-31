@@ -1,29 +1,31 @@
 import pool from './database.js'
 
+// TODO: make <resource>_id be returned as just <resource>
+
 const views = {}
 
 const dropAll = async () => {
-  const db = await pool.getConnection();
+  const db = await pool.getConnection()
   try {
-    await db.beginTransaction();
+    await db.beginTransaction()
 
     // drop views
-    await db.execute(`DROP VIEW IF EXISTS leaderboard_most_kills`)
-    await db.execute(`DROP VIEW IF EXISTS leaderboard_highest_kd_ratio`)
-    await db.execute(`DROP VIEW IF EXISTS leaderboard_most_exp`)
+    await db.execute('DROP VIEW IF EXISTS leaderboard_most_kills')
+    await db.execute('DROP VIEW IF EXISTS leaderboard_highest_kd_ratio')
+    await db.execute('DROP VIEW IF EXISTS leaderboard_most_exp')
 
     // drop tables with dependencies first
-    await db.execute(`DROP TABLE IF EXISTS npc_kill`);
-    await db.execute(`DROP TABLE IF EXISTS round_modifier`);
-    await db.execute(`DROP TABLE IF EXISTS performance`);
-    await db.execute(`DROP TABLE IF EXISTS round`);
+    await db.execute('DROP TABLE IF EXISTS npc_kill')
+    await db.execute('DROP TABLE IF EXISTS round_modifier')
+    await db.execute('DROP TABLE IF EXISTS performance')
+    await db.execute('DROP TABLE IF EXISTS round')
 
     // drop other tables
-    await db.execute(`DROP TABLE IF EXISTS modifier_cvar`);
-    await db.execute(`DROP TABLE IF EXISTS modifier`);
-    await db.execute(`DROP TABLE IF EXISTS map`);
-    await db.execute(`DROP TABLE IF EXISTS map_tier`);
-    await db.execute(`DROP TABLE IF EXISTS player`);
+    await db.execute('DROP TABLE IF EXISTS modifier_cvar')
+    await db.execute('DROP TABLE IF EXISTS modifier')
+    await db.execute('DROP TABLE IF EXISTS map')
+    await db.execute('DROP TABLE IF EXISTS map_tier')
+    await db.execute('DROP TABLE IF EXISTS player')
 
     await db.commit()
   } catch (error) {
@@ -219,7 +221,7 @@ const getRoundHistory = async (limit = 10, offset = 0, ascending = true, playerI
     query += ' LIMIT ? OFFSET ?'
     queryParams.push(limit, offset)
 
-      ;[rounds] = await conn.query(query, queryParams)
+    ;[rounds] = await conn.query(query, queryParams)
 
     if (rounds.length < 1) return {}
 
@@ -277,12 +279,12 @@ const searchPlayers = async (partialName) => {
 }
 
 const getPlayer = async (id) => {
-  const [player] = await pool.query('SELECT * FROM player WHERE id = ? LIMIT 1;', [id])
-  return player
+  const [players] = await pool.query('SELECT * FROM player WHERE id = ? LIMIT 1;', [id])
+  return players.length > 0 ? players[0] : null
 }
 
-const registerRound = async () => {
-  const [round] = await pool.query('INSERT INTO round () VALUES ();')
+const registerRound = async (mapId) => {
+  const [round] = await pool.query('INSERT INTO round (map_id) VALUES (?);', [mapId])
   return round.insertId
 }
 
@@ -296,10 +298,10 @@ const registerPlayer = async (steamId, name) => {
   return player.insertId
 }
 
-const registerMap = async (file, name, tier_id) => {
-  const [map] = await pool.query('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tier_id]);
-  return map.insertId;
-};
+const registerMap = async (file, name, tierId) => {
+  const [map] = await pool.query('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tierId])
+  return map.insertId
+}
 
 const registerPerformance = async (playerId, roundId, endReason, kills, deaths, damageTaken, extractionTime, presence, expEarned) => {
   const [performance] = await pool.query(`
@@ -352,21 +354,21 @@ const getMap = async (id) => {
 }
 
 const searchMaps = async (partialName) => {
-  let query = 'SELECT * FROM map';
-  let params = [];
+  let query = 'SELECT * FROM map'
+  const params = []
 
   if (partialName) {
-    query += ' WHERE name LIKE ?';
-    params.push(`%${partialName}%`); // TODO: review, safe?
+    query += ' WHERE name LIKE ?'
+    params.push(`%${partialName}%`) // TODO: review, safe?
   }
 
-  const [rows] = await pool.query(query, params);
-  return [rows];
+  const [rows] = await pool.query(query, params)
+  return [rows]
 }
 
-const getPerformanceDetails = async (performanceId) => {
-  const [result] = await pool.query('SELECT * FROM performance WHERE id = ?', [performanceId])
-  return result
+const getPerformance = async (id) => {
+  const [performances] = await pool.query('SELECT * FROM performance WHERE id = ? LIMIT 1;', [id])
+  return performances.length > 0 ? performances[0] : null
 }
 
 const getLeaderboardAroundPlayer = async (type, playerId, radius) => {
@@ -413,7 +415,7 @@ export {
   getKillDeathRatio,
   getAllMapTiers,
   searchMaps,
-  getPerformanceDetails,
+  getPerformance,
   getLeaderboardMostKills,
   getLeaderboardHighestKDRatio,
   getLeaderboardMostExp,

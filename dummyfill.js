@@ -68,7 +68,7 @@ async function insertDummyData () {
       ])
     }
 
-    // // Insert dummy matches
+    // // Insert dummy rounds
     console.log(`Inserting ${NUM_ROUNDS} performances...`)
     for (let j = 0; j < NUM_MATCHES; j++) {
       await db.execute(`
