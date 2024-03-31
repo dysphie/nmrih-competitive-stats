@@ -2,17 +2,15 @@ import pool from './database.js'
 
 // TODO: make <resource>_id be returned as just <resource>
 
-const views = {}
-
 const dropAll = async () => {
   const db = await pool.getConnection()
   try {
     await db.beginTransaction()
 
     // drop views
-    await db.execute('DROP VIEW IF EXISTS leaderboard_most_kills')
-    await db.execute('DROP VIEW IF EXISTS leaderboard_highest_kd_ratio')
-    await db.execute('DROP VIEW IF EXISTS leaderboard_most_exp')
+    await db.execute('DROP VIEW IF EXISTS leaderboard_kills')
+    await db.execute('DROP VIEW IF EXISTS leaderboard_kdr')
+    await db.execute('DROP VIEW IF EXISTS leaderboard_exp')
 
     // drop tables with dependencies first
     await db.execute('DROP TABLE IF EXISTS npc_kill')
@@ -145,7 +143,7 @@ const createTables = async () => {
     `)
 
     await db.execute(`
-      CREATE VIEW IF NOT EXISTS leaderboard_most_kills AS
+      CREATE VIEW IF NOT EXISTS leaderboard_kills AS
       SELECT p.id AS player_id, p.name AS player_name, SUM(kills) AS total_kills,
         ROW_NUMBER() OVER (ORDER BY SUM(kills) DESC) AS rank
       FROM performance perf
@@ -153,10 +151,9 @@ const createTables = async () => {
       GROUP BY perf.player_id
       ORDER BY total_kills DESC;
     `)
-    views.kills = 'leaderboard_most_kills'
 
     await db.execute(`
-      CREATE VIEW IF NOT EXISTS leaderboard_highest_kd_ratio AS
+      CREATE VIEW IF NOT EXISTS leaderboard_kdr AS
       SELECT p.id AS player_id, p.name AS player_name,
         IF(SUM(deaths) = 0, SUM(kills), SUM(kills) / SUM(deaths)) AS kd_ratio,
         ROW_NUMBER() OVER (ORDER BY IF(SUM(deaths) = 0, SUM(kills), SUM(kills) / SUM(deaths)) DESC) AS rank
@@ -165,10 +162,9 @@ const createTables = async () => {
       GROUP BY perf.player_id
       ORDER BY kd_ratio DESC;
     `)
-    views.kdr = 'leaderboard_highest_kd_ratio'
 
     await db.execute(`
-      CREATE VIEW IF NOT EXISTS leaderboard_most_exp AS
+      CREATE VIEW IF NOT EXISTS leaderboard_exp AS
       SELECT p.id AS player_id, p.name AS player_name, SUM(exp_earned) AS total_exp,
         ROW_NUMBER() OVER (ORDER BY SUM(exp_earned) DESC) AS rank
       FROM performance perf
@@ -176,7 +172,6 @@ const createTables = async () => {
       GROUP BY perf.player_id
       ORDER BY total_exp DESC;
     `)
-    views.exp = 'leaderboard_most_exp'
 
     await db.commit()
   } catch (error) {
@@ -375,14 +370,25 @@ const getKillDeathRatio = async (playerId) => {
   return totalDeaths === 0 ? totalKills : totalKills / totalDeaths
 }
 
-const getAllMapTiers = async () => {
+const getTiers = async () => {
   const [rows] = await pool.query('SELECT * FROM map_tier')
   return rows
 }
 
+const getMutators = async () => {
+  const [mutators] = await pool.query('SELECT * FROM mutator')
+  return mutators
+}
+
 const getMap = async (id) => {
-  const [map] = await pool.query('SELECT * FROM map WHERE id = ?', [id])
-  return map
+  const [maps] = await pool.query('SELECT * FROM map WHERE id = ? LIMIT 1;', [id])
+  return maps.length > 0 ? maps[0] : null
+}
+
+const getMutator = async (id) => {
+  const [mutators] = await pool.query('SELECT * FROM mutator WHERE id = ? LIMIT 1;', [id])
+  const result = mutators.length > 0 ? mutators[0] : null
+  return result
 }
 
 const searchMaps = async (searchTerm) => {
@@ -406,33 +412,20 @@ const getPerformance = async (id) => {
 }
 
 const getLeaderboardAroundPlayer = async (type, playerId, radius) => {
-  const view = views[type]
-  if (!view) throw new Error('Invalid view specified')
-
-  const [rank] = await pool.query('SELECT rank FROM ? WHERE player_id = ?', [view, playerId])
+  const [rank] = await pool.query('SELECT rank FROM ?? WHERE player_id = ?', ['leaderboard_' + type, playerId])
 
   const [leaderboard] = await pool.query(`
     SELECT *
     FROM ?
     WHERE rank BETWEEN ? - ? AND ? + ?
     ORDER BY rank;
-  `, [view, rank.rank, radius, rank.rank, radius])
+  `, [type, rank.rank, radius, rank.rank, radius])
 
   return leaderboard
 }
 
-const getLeaderboardMostKills = async () => {
-  const result = await pool.query('SELECT rank, kills, id FROM leaderboard_most_kills')
-  return result
-}
-
-const getLeaderboardHighestKDRatio = async () => {
-  const result = await pool.query('SELECT * FROM leaderboard_highest_kd_ratio')
-  return result
-}
-
-const getLeaderboardMostExp = async (limit, offset) => {
-  const [leaderboard] = await pool.query('SELECT * FROM leaderboard_most_exp LIMIT ? OFFSET ?', [limit, offset])
+const getLeaderboard = async (type, limit, offset) => {
+  const [leaderboard] = await pool.query('SELECT * FROM ?? LIMIT ? OFFSET ?', ['leaderboard_' + type, limit, offset])
   return leaderboard
 }
 
@@ -508,15 +501,15 @@ export {
   registerPlayer,
   registerPerformance,
   getKillDeathRatio,
-  getAllMapTiers,
+  getTiers,
+  getMutators,
+  getMutator,
   searchMaps,
   getPerformance,
-  getLeaderboardMostKills,
-  getLeaderboardHighestKDRatio,
-  getLeaderboardMostExp,
+  getLeaderboard,
+  getLeaderboardAroundPlayer,
   getRound,
   searchPlayers,
-  getLeaderboardAroundPlayer,
   getRounds,
   registerKills,
   registerTier,

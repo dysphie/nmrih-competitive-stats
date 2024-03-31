@@ -1,5 +1,5 @@
 import express from 'express'
-import { getAllMapTiers, registerTier } from '../queries.js'
+import { getTiers, registerTier } from '../queries.js'
 import { body, validationResult } from 'express-validator'
 
 const router = express.Router()
@@ -25,7 +25,7 @@ router.post('/', [
 
 router.get('/', async (req, res) => {
   try {
-    const tiers = await getAllMapTiers()
+    const tiers = await getTiers()
     res.status(200).json(tiers)
   } catch (error) {
     console.log('Error occurred while getting tiers:', error)

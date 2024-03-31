@@ -9,6 +9,7 @@ import players from './routes/players.js'
 import kills from './routes/kills.js'
 import performances from './routes/performances.js'
 import mutators from './routes/mutators.js'
+import leaderboards from './routes/leaderboards.js'
 import admin from './middleware/admin.js'
 
 import { rateLimit } from 'express-rate-limit'
@@ -37,6 +38,7 @@ app.use('/players', players)
 app.use('/kills', kills)
 app.use('/performances', performances)
 app.use('/mutators', mutators)
+app.use('/leaderboards', leaderboards)
 
 app.get('/', async (req, res) => {
   res.sendStatus(200)

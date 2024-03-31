@@ -35,7 +35,7 @@ router.get('/:id', [
     }
 
     const { id } = req.params
-    const [map] = await getMap(id)
+    const map = await getMap(id)
 
     if (!map) {
       return res.sendStatus(404)

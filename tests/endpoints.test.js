@@ -37,6 +37,21 @@ test('register mutator', async () => {
   expect(mutator2.body.id).toBe(2)
 })
 
+test('get mutators', async () => {
+  const mutators = await request.get('/mutators')
+
+  expect(mutators.status).toBe(200)
+  expect(mutators.body.length).toBe(2)
+})
+
+test('get mutators by id', async () => {
+  const map = await request.get('/mutators/1')
+
+  expect(map.status).toBe(200)
+  expect(map.body.id).toBe(1)
+  expect(map.body.name).toBe('Test Mutator 1')
+})
+
 test('register tiers', async () => {
   const tier1 = await request.post('/tiers').send({
     name: 'Test Tier 1',
@@ -56,6 +71,7 @@ test('register tiers', async () => {
 
 test('get tiers', async () => {
   const tiers = await request.get('/tiers')
+
   expect(tiers.status).toBe(200)
   expect(tiers.body.length).toBe(2)
   expect(tiers.body[0].name).toBe('Test Tier 1')
@@ -81,6 +97,7 @@ test('register players', async () => {
 
 test('get players by name', async () => {
   const players = await request.get('/players?q=Player 1')
+
   expect(players.status).toBe(200)
   expect(players.body.length).toBe(1)
   expect(players.body[0].name).toBe('Test Player 1')
@@ -88,6 +105,7 @@ test('get players by name', async () => {
 
 test('get player by id', async () => {
   const player = await request.get('/players/1')
+
   expect(player.status).toBe(200)
   expect(player.body.name).toBe('Test Player 1')
   expect(player.body.steam_id).toBe('9223372036854775806')
@@ -120,7 +138,6 @@ test('get maps', async () => {
 
 test('get map by name', async () => {
   const maps = await request.get('/maps?q=Map 1')
-  console.log(JSON.stringify(maps, null, 2))
   expect(maps.status).toBe(200)
   expect(maps.body.length).toBe(1)
   expect(maps.body[0].name).toBe('Test Map 1')
@@ -173,4 +190,22 @@ test('get performance by id', async () => {
   expect(performance.body.extraction_time).toBe(300)
   expect(performance.body.presence).toBe(100.0)
   expect(performance.body.exp_earned).toBe(1000)
+})
+
+test('get leaderboard (exp)', async () => {
+  const lb = await request.get('/leaderboards/exp')
+  expect(lb.status).toBe(200)
+  expect(lb.body.length).toBe(1)
+})
+
+test('get leaderboard (kills)', async () => {
+  const lb = await request.get('/leaderboards/kills')
+  expect(lb.status).toBe(200)
+  expect(lb.body.length).toBe(1)
+})
+
+test('get leaderboard (kdr)', async () => {
+  const lb = await request.get('/leaderboards/kdr')
+  expect(lb.status).toBe(200)
+  expect(lb.body.length).toBe(1)
 })

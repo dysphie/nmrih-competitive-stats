@@ -25,11 +25,11 @@ router.post('/', [
 })
 
 router.get('/', [
-  query('offset').optional().isInt({ min: 0 }).toInt().default(0),
-  query('limit').optional().isInt({ min: 1, max: 30 }).toInt().default(10),
-  query('player').optional().isInt({ min: 1 }).toInt().default(null),
+  query('offset').isInt({ min: 0 }).toInt().default(0),
+  query('limit').isInt({ min: 1, max: 30 }).toInt().default(10),
+  query('player').isInt({ min: 1 }).toInt().default(null),
   query('map_name').optional().isLength({ min: 3 }),
-  query('sort').optional().isIn(['asc', 'desc']).default('asc')
+  query('sort').isIn(['asc', 'desc']).default('asc')
 ],
 async (req, res) => {
   const errors = validationResult(req)

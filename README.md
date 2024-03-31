@@ -1,26 +1,27 @@
+Work-in-progress, basic overview:
 
-
-POST /performances { player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned }
-
-POST /maps { file, name, tier }
-GET /maps { name }
-GET /maps/:id
-
-POST /rounds { map_id }
-GET /rounds { offset, limit, player, map, sort }
-GET /rounds/:id 
-
-GET /players { name }
-GET /players/:id
-
-GET /players/:id/performances
-GET /players/:id/completions
+POST /mutators { name, points_multiplier, cvars: [ { name, value }, ... ] }
+GET /mutators
+GET /mutators/:id
 
 POST /tiers { name, points }
 GET /tiers
 
+POST /players { name, steam }
+GET /players { q }
+GET /players/:id
 
+POST /maps { name, file, tier }
+GET /maps { q }
+GET /maps/:id
 
+POST /rounds { map }
+GET /rounds { offset, limit, player, map, sort }
+GET /rounds/:id 
 
+POST /performances { player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned }
+GET /performances/:id
 
-
+GET /leaderboards/exp
+GET /leaderboards/kills
+GET /leaderboards/kdr
