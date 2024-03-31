@@ -209,3 +209,17 @@ test('get leaderboard (kdr)', async () => {
   expect(lb.status).toBe(200)
   expect(lb.body.length).toBe(1)
 })
+
+test('register kills', async () => {
+  const killsData = {
+    performance: 1,
+    kills: [
+      { player: 1, npc_type: 2, hitgroup: 3 },
+      { player: 2, npc_type: 3, hitgroup: 1 }
+    ]
+  }
+
+  const response = await request.post('/kills').send(killsData).set('Authentication', adminToken)
+
+  expect(response.status).toBe(200)
+})

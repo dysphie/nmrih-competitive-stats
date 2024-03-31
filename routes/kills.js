@@ -19,6 +19,7 @@ router.post('/', [
 
   try {
     await registerKills(performance, kills)
+    res.sendStatus(200)
   } catch (error) {
     console.log('Error occurred while fetching players:', error)
     res.sendStatus(500)

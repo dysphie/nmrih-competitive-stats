@@ -346,7 +346,7 @@ const registerKills = async (performanceId, kills) => {
     await db.beginTransaction()
 
     for (const kill of kills) {
-      await db.execute('INSERT INTO npc_kill (performance_id, player_id, npc_type, hitgroup) VALUES (?, ?, ?)', [performanceId, kill.player, kill.npc_type, kill.hitgroup])
+      await db.execute('INSERT INTO npc_kill (performance_id, player_id, npc_type, hitgroup) VALUES (?, ?, ?, ?)', [performanceId, kill.player, kill.npc_type, kill.hitgroup])
     }
 
     await db.commit()
