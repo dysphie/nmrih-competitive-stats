@@ -17,8 +17,8 @@ Work-in-progress, basic overview:
 | GET    | `/rounds`            | `{ offset, limit, player, map, sort }`                                                                 |
 | GET    | `/rounds/:id`        |                                                                                                         |
 | POST   | `/performances`      | `{ player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned }`    |
-| POST   | `/kills`             | `{ performance, kills: [ { player, npc_type, hitgroup }, ... ] }`                                       |
 | GET    | `/performances/:id`  |                                                                                                         |
+| POST   | `/kills`             | `{ performance, kills: [ { player, npc_type, hitgroup }, ... ] }`                                       |
 | GET    | `/leaderboards/exp`  |                                                                                                         |
 | GET    | `/leaderboards/kills`|                                                                                                         |
 | GET    | `/leaderboards/kdr`  |                                                                                                         |
