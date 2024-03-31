@@ -274,13 +274,13 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
   return [...history.values()]
 }
 
-const searchPlayers = async (partialName) => {
+const searchPlayers = async (searchTerm) => {
   let query = 'SELECT id, name FROM player'
   const params = []
 
-  if (partialName) {
+  if (searchTerm) {
     query += ' WHERE name LIKE ?'
-    params.push(`%${partialName}%`)
+    params.push(`%${searchTerm}%`)
   }
 
   query += ' LIMIT 50;'
@@ -385,13 +385,13 @@ const getMap = async (id) => {
   return map
 }
 
-const searchMaps = async (partialName) => {
+const searchMaps = async (searchTerm) => {
   let query = 'SELECT * FROM map'
   const params = []
 
-  if (partialName) {
+  if (searchTerm) {
     query += ' WHERE name LIKE ?'
-    params.push(`%${partialName}%`) // TODO: review, safe?
+    params.push(`%${searchTerm}%`) // TODO: review, safe?
   }
 
   query += ' LIMIT 50;'

@@ -79,14 +79,8 @@ test('register players', async () => {
   expect(player2.body.id).toBe(2)
 })
 
-test('get players', async () => {
-  const players = await request.get('/players')
-  expect(players.status).toBe(200)
-  expect(players.body.length).toBe(2)
-})
-
 test('get players by name', async () => {
-  const players = await request.get('/players?name=Player 1')
+  const players = await request.get('/players?q=Player 1')
   expect(players.status).toBe(200)
   expect(players.body.length).toBe(1)
   expect(players.body[0].name).toBe('Test Player 1')
@@ -125,10 +119,11 @@ test('get maps', async () => {
 })
 
 test('get map by name', async () => {
-  const map = await request.get('/maps?name=Map 1')
-  expect(map.status).toBe(200)
-  expect(map.body.length).toBe(1)
-  expect(map.body[0].name).toBe('Test Map 1')
+  const maps = await request.get('/maps?q=Map 1')
+  console.log(JSON.stringify(maps, null, 2))
+  expect(maps.status).toBe(200)
+  expect(maps.body.length).toBe(1)
+  expect(maps.body[0].name).toBe('Test Map 1')
 })
 
 test('get map by id', async () => {

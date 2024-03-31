@@ -1,7 +1,7 @@
-import { body } from 'express-validator'
+import { header } from 'express-validator'
 
 const middleware = [
-  body('authentication').isLength({ min: 64 }).withMessage('Token must be at least 64 characters long'),
+  header('authentication').isLength({ min: 64 }).withMessage('Token must be at least 64 characters long'),
 
   (req, res, next) => {
     const authHeader = req.headers.authentication

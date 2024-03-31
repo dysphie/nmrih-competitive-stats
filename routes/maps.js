@@ -49,7 +49,7 @@ router.get('/:id', [
 })
 
 router.get('/', [
-  query('name').optional().isLength({ min: 3 })
+  query('q').optional().isLength({ min: 3 })
 ], async (req, res) => {
   const errors = validationResult(req)
 
@@ -57,9 +57,9 @@ router.get('/', [
     return res.status(400).json({ errors: errors.array() })
   }
 
-  const { name } = req.query
+  const { q } = req.query
   try {
-    const maps = await searchMaps(name)
+    const maps = await searchMaps(q)
     res.status(200).json(maps)
   } catch (error) {
     console.error(error)

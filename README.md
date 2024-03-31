@@ -8,9 +8,11 @@ GET /maps/:id
 
 POST /rounds { map_id }
 GET /rounds { offset, limit, player, map, sort }
+GET /rounds/:id 
 
 GET /players { name }
 GET /players/:id
+
 GET /players/:id/performances
 GET /players/:id/completions
 

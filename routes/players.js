@@ -25,7 +25,7 @@ router.post('/', [
 })
 
 router.get('/', [
-  query('name').optional().isLength({ min: 3 })
+  query('q').isLength({ min: 3 })
 ], async (req, res) => {
   const errors = validationResult(req)
 
@@ -33,10 +33,10 @@ router.get('/', [
     return res.status(400).json({ errors: errors.array() })
   }
 
-  const { name } = req.query
+  const { q } = req.query
 
   try {
-    const players = await searchPlayers(name)
+    const players = await searchPlayers(q)
     res.status(200).json(players)
   } catch (error) {
     console.log('Error occurred while searching players:', error)
