@@ -1,5 +1,5 @@
 import express from 'express'
-import { getPerformance, registerPerformance } from '../queries.js'
+import { getPerformance, getPlayer, getRound, registerPerformance } from '../queries.js'
 import { body, param, validationResult } from 'express-validator'
 
 const router = express.Router()
@@ -24,6 +24,17 @@ router.post('/', [
   try {
     // eslint-disable-next-line camelcase
     const { player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned } = req.body
+
+    const existingPlayer = await getPlayer(player)
+    if (!existingPlayer) {
+      return res.status(400).json({ error: 'Invalid player ID' })
+    }
+
+    const existingRound = await getRound(round)
+    if (!existingRound) {
+      return res.status(400).json({ error: 'Invalid round ID' })
+    }
+
     const id = await registerPerformance(player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned)
     res.status(200).json({ id })
   } catch (error) {

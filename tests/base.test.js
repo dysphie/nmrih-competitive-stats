@@ -37,11 +37,18 @@ test('register player', async () => {
   expect(player.body.id).toBe(1)
 })
 
+test('search players', async () => {
+  const players = await request.get('/players?name=Test')
+  expect(players.status).toBe(200)
+  expect(players.body.length).toBe(1)
+  expect(players.body[0].name).toBe('Test Player')
+})
+
 test('get player', async () => {
-  const tiers = await request.get('/players/1')
-  expect(tiers.status).toBe(200)
-  expect(tiers.body.name).toBe('Test Player')
-  expect(tiers.body.steam_id).toBe('9223372036854775807')
+  const player = await request.get('/players/1')
+  expect(player.status).toBe(200)
+  expect(player.body.name).toBe('Test Player')
+  expect(player.body.steam_id).toBe('9223372036854775807')
 })
 
 test('register map', async () => {

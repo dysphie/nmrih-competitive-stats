@@ -402,8 +402,8 @@ const getLeaderboardMostExp = async (limit, offset) => {
   return leaderboard
 }
 
-const getroundDetails = async (roundId) => {
-  const result = await pool.query('SELECT * FROM round WHERE id = ?', [roundId])
+const getRound = async (id) => {
+  const result = await pool.query('SELECT * FROM round WHERE id = ?', [id])
   return result
 }
 
@@ -419,7 +419,7 @@ export {
   getLeaderboardMostKills,
   getLeaderboardHighestKDRatio,
   getLeaderboardMostExp,
-  getroundDetails,
+  getRound,
   searchPlayers,
   getLeaderboardAroundPlayer,
   getRoundHistory,

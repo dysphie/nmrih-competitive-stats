@@ -24,7 +24,7 @@ router.post('/', [
   }
 })
 
-router.get('/search', [
+router.get('/', [
   query('name').optional().isLength({ min: 3 })
 ], async (req, res) => {
   const errors = validationResult(req)
