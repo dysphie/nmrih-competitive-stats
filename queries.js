@@ -187,7 +187,7 @@ const createTables = async () => {
   }
 }
 
-const getRoundHistory = async (limit = 10, offset = 0, ascending = true, playerId = null, mapId = null) => {
+const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = null, mapId = null) => {
   const conn = await pool.getConnection()
   let rounds, performances
 
@@ -436,9 +436,70 @@ const getLeaderboardMostExp = async (limit, offset) => {
   return leaderboard
 }
 
-const getRound = async (id) => {
-  const result = await pool.query('SELECT * FROM round WHERE id = ?', [id])
-  return result
+const getRound = async (roundId) => {
+  const conn = await pool.getConnection()
+  let roundData, performances
+
+  try {
+    const query = `
+      SELECT 
+        r.id, r.map_id, r.created_at, 
+        m.file AS map_file, 
+        m.name AS map_name
+      FROM 
+        round AS r
+      JOIN 
+        map AS m ON r.map_id = m.id
+      WHERE 
+        r.id = ?
+    `;
+
+    // Execute the query
+    [roundData] = await conn.query(query, [roundId])
+
+    if (roundData.length < 1) return null; // Return null if round not found
+
+    // Fetch performances for the round
+    [performances] = await conn.query(`
+      SELECT 
+        p.*, 
+        pl.name AS player_name,
+        pl.id AS player_id
+      FROM 
+        performance AS p
+      JOIN 
+        player AS pl ON p.player_id = pl.id
+      WHERE
+        p.round_id = ?
+    `, [roundId])
+  } finally {
+    conn.release()
+  }
+
+  const round = {
+    id: roundData[0].id,
+    created_at: roundData[0].created_at,
+    map: {
+      id: roundData[0].map_id,
+      name: roundData[0].map_name,
+      file: roundData[0].map_file
+    },
+    performances: performances.map(performance => ({
+      id: performance.id,
+      kills: performance.kills,
+      deaths: performance.deaths,
+      end_reason: performance.end_reason,
+      damage_taken: performance.damage_taken,
+      extraction_time: performance.extraction_time,
+      presence: performance.presence,
+      player: {
+        id: performance.player_id,
+        name: performance.player_name
+      }
+    }))
+  }
+
+  return round
 }
 
 export {
@@ -456,7 +517,7 @@ export {
   getRound,
   searchPlayers,
   getLeaderboardAroundPlayer,
-  getRoundHistory,
+  getRounds,
   registerKills,
   registerTier,
   getPlayer,
