@@ -55,8 +55,6 @@ router.get('/:id', [
     const { id } = req.params
     const performance = await getPerformance(id)
 
-    console.log(`${JSON.stringify(performance, null, 2)}`)
-
     if (!performance) {
       return res.sendStatus(404)
     }

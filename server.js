@@ -1,11 +1,17 @@
+import 'dotenv/config'
 import express from 'express'
-import dotenv from 'dotenv'
 import { createTables } from './queries.js'
-import routes from './routes/index.js'
+
+import rounds from './routes/rounds.js'
+import maps from './routes/maps.js'
+import tiers from './routes/tiers.js'
+import players from './routes/players.js'
+import kills from './routes/kills.js'
+import performances from './routes/performances.js'
+import mutators from './routes/mutators.js'
+import admin from './middleware/admin.js'
 
 import { rateLimit } from 'express-rate-limit'
-
-dotenv.config()
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -21,13 +27,16 @@ await createTables()
 
 app.use(limiter)
 app.use(express.json())
-app.use('/tiers', routes.tiers)
-app.use('/maps', routes.maps)
-app.use('/rounds', routes.rounds)
-app.use('/players', routes.players)
-app.use('/kills', routes.kills)
-app.use('/performances', routes.performances)
-app.use('/mutators', routes.mutators)
+
+app.post('*', admin)
+
+app.use('/tiers', tiers)
+app.use('/maps', maps)
+app.use('/rounds', rounds)
+app.use('/players', players)
+app.use('/kills', kills)
+app.use('/performances', performances)
+app.use('/mutators', mutators)
 
 app.get('/', async (req, res) => {
   res.sendStatus(200)

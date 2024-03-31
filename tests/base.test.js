@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { expect, test } from 'vitest'
 import app from '../server'
 import supertest from 'supertest'
@@ -9,6 +10,8 @@ const request = supertest(app)
 await dropAll()
 await createTables()
 
+const adminToken = process.env.ADMIN_AUTH_TOKEN
+
 test('register mutator', async () => {
   const mutator1 = await request.post('/mutators').send({
     name: 'Test Mutator 1',
@@ -17,7 +20,7 @@ test('register mutator', async () => {
       { name: 'cvar1', value: '1' },
       { name: 'cvar2', value: '1' }
     ]
-  })
+  }).set('Authentication', adminToken)
 
   const mutator2 = await request.post('/mutators').send({
     name: 'Test Mutator 2',
@@ -26,7 +29,7 @@ test('register mutator', async () => {
       { name: 'cvar1', value: '2' },
       { name: 'cvar2', value: '2' }
     ]
-  })
+  }).set('Authentication', adminToken)
 
   expect(mutator1.status).toBe(200)
   expect(mutator1.body.id).toBe(1)
@@ -38,12 +41,12 @@ test('register tiers', async () => {
   const tier1 = await request.post('/tiers').send({
     name: 'Test Tier 1',
     points: 1
-  })
+  }).set('Authentication', adminToken)
 
   const tier2 = await request.post('/tiers').send({
     name: 'Test Tier 2',
     points: 2
-  })
+  }).set('Authentication', adminToken)
 
   expect(tier1.status).toBe(200)
   expect(tier1.body.id).toBe(1)
@@ -63,12 +66,12 @@ test('register players', async () => {
   const player1 = await request.post('/players').send({
     name: 'Test Player 1',
     steam: '9223372036854775806'
-  })
+  }).set('Authentication', adminToken)
 
   const player2 = await request.post('/players').send({
     name: 'Test Player 2',
     steam: '9223372036854775807'
-  })
+  }).set('Authentication', adminToken)
 
   expect(player1.status).toBe(200)
   expect(player1.body.id).toBe(1)
@@ -101,13 +104,13 @@ test('register maps', async () => {
     name: 'Test Map 1',
     file: 'nmo_test1',
     tier: 1
-  })
+  }).set('Authentication', adminToken)
 
   const map2 = await request.post('/maps').send({
     name: 'Test Map 2',
     file: 'nmo_test2',
     tier: 2
-  })
+  }).set('Authentication', adminToken)
 
   expect(map1.status).toBe(200)
   expect(map1.body.id).toBe(1)
@@ -139,7 +142,7 @@ test('get map by id', async () => {
 test('register round', async () => {
   const rounds = await request.post('/rounds').send({
     map: 1
-  })
+  }).set('Authentication', adminToken)
 
   expect(rounds.status).toBe(200)
   expect(rounds.body.id).toBe(1)
@@ -156,7 +159,7 @@ test('register performance', async () => {
     extraction_time: 300,
     presence: 100.0,
     exp_earned: 1000
-  })
+  }).set('Authentication', adminToken)
 
   expect(performance.status).toBe(200)
   expect(performance.body.id).toBe(1)
