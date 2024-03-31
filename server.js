@@ -15,6 +15,7 @@ app.use('/tiers', routes.tiers)
 app.use('/maps', routes.maps)
 app.use('/matches', routes.matches)
 app.use('/players', routes.players)
+app.use('/kills', routes.kills)
 
 app.get("/", async (req, res) => {
   res.sendStatus(200)

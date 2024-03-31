@@ -296,6 +296,11 @@ const registerPlayer = async (steamId, name) => {
   return player.insertId
 }
 
+const registerMap = async (file, name, tier_id) => {
+  const [map] = await pool.query('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tier_id]);
+  return map.insertId;
+};
+
 const registerPerformance = async (playerId, roundId, endReason, kills, deaths, damageTaken, extractionTime, presence, expEarned) => {
   const [performance] = await pool.query(`
     INSERT INTO performance 
@@ -341,6 +346,11 @@ const getAllMapTiers = async () => {
   return rows
 }
 
+const getMap = async (id) => {
+  const [map] = await pool.query('SELECT * FROM map WHERE id = ?', [id])
+  return map
+}
+
 const searchMaps = async (partialName) => {
   let query = 'SELECT * FROM map';
   let params = [];
@@ -355,7 +365,7 @@ const searchMaps = async (partialName) => {
 }
 
 const getPerformanceDetails = async (performanceId) => {
-  const result = await pool.query('SELECT * FROM `performance` WHERE id = ?', [performanceId])
+  const [result] = await pool.query('SELECT * FROM performance WHERE id = ?', [performanceId])
   return result
 }
 
@@ -414,5 +424,7 @@ export {
   registerKills,
   registerTier,
   getPlayer,
-  dropAll
+  getMap,
+  dropAll,
+  registerMap
 }
