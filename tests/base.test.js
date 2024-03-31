@@ -9,74 +9,140 @@ const request = supertest(app)
 await dropAll()
 await createTables()
 
-test('register tier', async () => {
-  const tier = await request.post('/tiers').send({
-    name: 'Test Tier',
-    points: 123
+test('register mutator', async () => {
+  const mutator1 = await request.post('/mutators').send({
+    name: 'Test Mutator 1',
+    points_multiplier: '1.0',
+    cvars: [
+      { name: 'cvar1', value: '1' },
+      { name: 'cvar2', value: '1' }
+    ]
   })
 
-  expect(tier.status).toBe(200)
-  expect(tier.body.id).toBe(1)
+  const mutator2 = await request.post('/mutators').send({
+    name: 'Test Mutator 2',
+    points_multiplier: '2.0',
+    cvars: [
+      { name: 'cvar1', value: '2' },
+      { name: 'cvar2', value: '2' }
+    ]
+  })
+
+  expect(mutator1.status).toBe(200)
+  expect(mutator1.body.id).toBe(1)
+  expect(mutator2.status).toBe(200)
+  expect(mutator2.body.id).toBe(2)
+})
+
+test('register tiers', async () => {
+  const tier1 = await request.post('/tiers').send({
+    name: 'Test Tier 1',
+    points: 1
+  })
+
+  const tier2 = await request.post('/tiers').send({
+    name: 'Test Tier 2',
+    points: 2
+  })
+
+  expect(tier1.status).toBe(200)
+  expect(tier1.body.id).toBe(1)
+  expect(tier2.status).toBe(200)
+  expect(tier2.body.id).toBe(2)
 })
 
 test('get tiers', async () => {
   const tiers = await request.get('/tiers')
   expect(tiers.status).toBe(200)
-  expect(tiers.body.length).toBe(1)
-  expect(tiers.body[0].name).toBe('Test Tier')
-  expect(tiers.body[0].points).toBe(123)
+  expect(tiers.body.length).toBe(2)
+  expect(tiers.body[0].name).toBe('Test Tier 1')
+  expect(tiers.body[0].points).toBe(1)
 })
 
-test('register player', async () => {
-  const player = await request.post('/players').send({
-    name: 'Test Player',
+test('register players', async () => {
+  const player1 = await request.post('/players').send({
+    name: 'Test Player 1',
+    steam: '9223372036854775806'
+  })
+
+  const player2 = await request.post('/players').send({
+    name: 'Test Player 2',
     steam: '9223372036854775807'
   })
 
-  expect(player.status).toBe(200)
-  expect(player.body.id).toBe(1)
+  expect(player1.status).toBe(200)
+  expect(player1.body.id).toBe(1)
+  expect(player2.status).toBe(200)
+  expect(player2.body.id).toBe(2)
 })
 
-test('search players', async () => {
-  const players = await request.get('/players?name=Test')
+test('get players', async () => {
+  const players = await request.get('/players')
+  expect(players.status).toBe(200)
+  expect(players.body.length).toBe(2)
+})
+
+test('get players by name', async () => {
+  const players = await request.get('/players?name=Player 1')
   expect(players.status).toBe(200)
   expect(players.body.length).toBe(1)
-  expect(players.body[0].name).toBe('Test Player')
+  expect(players.body[0].name).toBe('Test Player 1')
 })
 
-test('get player', async () => {
+test('get player by id', async () => {
   const player = await request.get('/players/1')
   expect(player.status).toBe(200)
-  expect(player.body.name).toBe('Test Player')
-  expect(player.body.steam_id).toBe('9223372036854775807')
+  expect(player.body.name).toBe('Test Player 1')
+  expect(player.body.steam_id).toBe('9223372036854775806')
 })
 
-test('register map', async () => {
-  const map = await request.post('/maps').send({
-    name: 'Test Map',
-    file: 'nmo_test',
+test('register maps', async () => {
+  const map1 = await request.post('/maps').send({
+    name: 'Test Map 1',
+    file: 'nmo_test1',
     tier: 1
   })
 
-  expect(map.status).toBe(200)
-  expect(map.body.id).toBe(1)
+  const map2 = await request.post('/maps').send({
+    name: 'Test Map 2',
+    file: 'nmo_test2',
+    tier: 2
+  })
+
+  expect(map1.status).toBe(200)
+  expect(map1.body.id).toBe(1)
+  expect(map2.status).toBe(200)
+  expect(map2.body.id).toBe(2)
 })
 
-test('get map', async () => {
+test('get maps', async () => {
+  const map = await request.get('/maps')
+  expect(map.status).toBe(200)
+  expect(map.body.length).toBe(2)
+})
+
+test('get map by name', async () => {
+  const map = await request.get('/maps?name=Map 1')
+  expect(map.status).toBe(200)
+  expect(map.body.length).toBe(1)
+  expect(map.body[0].name).toBe('Test Map 1')
+})
+
+test('get map by id', async () => {
   const map = await request.get('/maps/1')
   expect(map.status).toBe(200)
-  expect(map.body.name).toBe('Test Map')
-  expect(map.body.file).toBe('nmo_test')
+  expect(map.body.name).toBe('Test Map 1')
+  expect(map.body.file).toBe('nmo_test1')
   expect(map.body.tier_id).toBe(1)
 })
 
 test('register round', async () => {
-  const performance = await request.post('/rounds').send({
+  const rounds = await request.post('/rounds').send({
     map: 1
   })
 
-  expect(performance.status).toBe(200)
-  expect(performance.body.id).toBe(1)
+  expect(rounds.status).toBe(200)
+  expect(rounds.body.id).toBe(1)
 })
 
 test('register performance', async () => {
@@ -96,7 +162,7 @@ test('register performance', async () => {
   expect(performance.body.id).toBe(1)
 })
 
-test('get performance', async () => {
+test('get performance by id', async () => {
   const performance = await request.get('/performances/1')
 
   expect(performance.status).toBe(200)

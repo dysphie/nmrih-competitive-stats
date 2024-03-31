@@ -16,13 +16,13 @@ const dropAll = async () => {
 
     // drop tables with dependencies first
     await db.execute('DROP TABLE IF EXISTS npc_kill')
-    await db.execute('DROP TABLE IF EXISTS round_modifier')
+    await db.execute('DROP TABLE IF EXISTS round_mutator')
     await db.execute('DROP TABLE IF EXISTS performance')
     await db.execute('DROP TABLE IF EXISTS round')
 
     // drop other tables
-    await db.execute('DROP TABLE IF EXISTS modifier_cvar')
-    await db.execute('DROP TABLE IF EXISTS modifier')
+    await db.execute('DROP TABLE IF EXISTS mutator_cvar')
+    await db.execute('DROP TABLE IF EXISTS mutator')
     await db.execute('DROP TABLE IF EXISTS map')
     await db.execute('DROP TABLE IF EXISTS map_tier')
     await db.execute('DROP TABLE IF EXISTS player')
@@ -69,7 +69,7 @@ const createTables = async () => {
     `)
 
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS modifier (
+      CREATE TABLE IF NOT EXISTS mutator (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         points_multiplier DOUBLE NOT NULL
@@ -77,12 +77,12 @@ const createTables = async () => {
     `)
 
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS modifier_cvar (
+      CREATE TABLE IF NOT EXISTS mutator_cvar (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        modifier_id INT NOT NULL,
+        mutator_id INT NOT NULL,
         name VARCHAR(255) NOT NULL,
         value VARCHAR(255) NOT NULL,
-        FOREIGN KEY (modifier_id) REFERENCES modifier(id)
+        FOREIGN KEY (mutator_id) REFERENCES mutator(id)
       );
     `)
 
@@ -109,18 +109,19 @@ const createTables = async () => {
         presence DOUBLE NOT NULL,
         exp_earned DOUBLE NOT NULL,
         FOREIGN KEY (round_id) REFERENCES round(id),
-        FOREIGN KEY (player_id) REFERENCES player(id)
+        FOREIGN KEY (player_id) REFERENCES player(id),
+        UNIQUE (player_id, round_id)
       );
     `)
 
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS round_modifier (
+      CREATE TABLE IF NOT EXISTS round_mutator (
         id INT AUTO_INCREMENT PRIMARY KEY,
         round_id INT NOT NULL,
-        modifier_id INT NOT NULL,
+        mutator_id INT NOT NULL,
         FOREIGN KEY (round_id) REFERENCES round(id),
-        FOREIGN KEY (modifier_id) REFERENCES modifier(id),
-        UNIQUE (round_id, modifier_id)
+        FOREIGN KEY (mutator_id) REFERENCES mutator(id),
+        UNIQUE (round_id, mutator_id)
       );
     `)
 
@@ -274,7 +275,17 @@ const getRoundHistory = async (limit = 10, offset = 0, ascending = true, playerI
 }
 
 const searchPlayers = async (partialName) => {
-  const [players] = await pool.query('SELECT id, name FROM player WHERE name LIKE ? LIMIT 50;', [`%${partialName}%`])
+  let query = 'SELECT id, name FROM player'
+  const params = []
+
+  if (partialName) {
+    query += ' WHERE name LIKE ?'
+    params.push(`%${partialName}%`)
+  }
+
+  query += ' LIMIT 50;'
+
+  const [players] = await pool.query(query, params)
   return players
 }
 
@@ -311,6 +322,27 @@ const registerPerformance = async (playerId, roundId, endReason, kills, deaths, 
   `, [playerId, roundId, endReason, kills, deaths, damageTaken, extractionTime, presence, expEarned])
 
   return performance.insertId
+}
+
+const registerMutator = async (name, pointsMultiplier, cvars) => {
+  const db = await pool.getConnection()
+  try {
+    await db.beginTransaction()
+    const [mutator] = await db.execute('INSERT INTO mutator (name, points_multiplier) VALUES (?, ?)', [name, pointsMultiplier])
+    const mutatorId = mutator.insertId
+
+    for (const cvar of cvars) {
+      await db.execute('INSERT INTO mutator_cvar (mutator_id, name, value) VALUES (?, ?, ?)', [mutatorId, cvar.name, cvar.value])
+    }
+
+    await db.commit()
+    return mutatorId
+  } catch (error) {
+    await db.rollback()
+    throw error
+  } finally {
+    db.release()
+  }
 }
 
 const registerKills = async (performanceId, kills) => {
@@ -362,8 +394,10 @@ const searchMaps = async (partialName) => {
     params.push(`%${partialName}%`) // TODO: review, safe?
   }
 
-  const [rows] = await pool.query(query, params)
-  return [rows]
+  query += ' LIMIT 50;'
+
+  const [maps] = await pool.query(query, params)
+  return maps
 }
 
 const getPerformance = async (id) => {
@@ -428,5 +462,6 @@ export {
   getPlayer,
   getMap,
   dropAll,
-  registerMap
+  registerMap,
+  registerMutator
 }
