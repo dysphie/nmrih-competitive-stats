@@ -1,16 +1,19 @@
-Work-in-progress, basic overview:
+> [!IMPORTANT]  
+> This repository is a work-in-progress
+
+Quick summary
 
 | Method | Endpoint             | Request Body                                                                                              | Description                                           |
 |--------|----------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
 | POST   | `/mutators`          | `{ name, points_multiplier, cvars: [ { name, value }, ... ] }`                                            | Register a new mutator                                |
 | GET    | `/mutators`          |                                                                                                           | Get a list of existing mutators                      |
-| GET    | `/mutators/:id`      |                                                                                                           | Get a mutator object by ID                            |
+| GET    | `/mutators/:id`      |                                                                                                           | Get a mutator by ID                            |
 | POST   | `/tiers`             | `{ name, points }`                                                                                        | Register a new map tier                               |
 | GET    | `/tiers`             |                                                                                                           | Get a list of map tiers                               |
 | POST   | `/players`           | `{ name, steam }`                                                                                         | Register a new player                                 |
 | GET    | `/players`           | `{ q }`                                                                                                   | Get a list of players whose name partially matches the query |
 | GET    | `/players/:id`       |                                                                                                           | Get player by ID                                      |
-| GET    | `/players/:id/kills` |                                                                                                           | Get player kill stats by player ID                    |
+| GET    | `/players/:id/kills` |                                                                                                           | Get player kill stats                   |
 | POST   | `/maps`              | `{ name, file, tier }`                                                                                    | Register a new map                                    |
 | GET    | `/maps`              | `{ q }`                                                                                                   | Get a list of maps whose name partially matches the query |
 | GET    | `/maps/:id`          |                                                                                                           | Get a map by ID                                       |
