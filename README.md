@@ -5,7 +5,7 @@ Quick summary
 
 | Method | Endpoint             | Request Body                                                                                              | Description                                           |
 |--------|----------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| POST   | `/mutators`          | `{ name, points_multiplier, cvars: [ { name, value }, ... ] }`                                            | Register a new mutator                                |
+| POST   | `/mutators`          | `{ name, unlisted, points_multiplier, cvars: [ { name, value }, ... ] }`                                            | Register a new mutator                                |
 | GET    | `/mutators`          |                                                                                                           | Get a list of existing mutators                      |
 | GET    | `/mutators/:id`      |                                                                                                           | Get a mutator by ID                            |
 | POST   | `/tiers`             | `{ name, points }`                                                                                        | Register a new map tier                               |

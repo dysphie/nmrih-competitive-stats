@@ -6,6 +6,7 @@ const router = express.Router()
 
 router.post('/', [
   body('name').isLength({ min: 1 }),
+  body('unlisted').default(false).isBoolean().toBoolean(),
   body('points_multiplier').isFloat({ min: 0.0 }).toFloat(),
   body('cvars').isArray(),
   body('cvars.*.name').isLength({ min: 1 }),
@@ -19,8 +20,8 @@ router.post('/', [
 
   try {
     // eslint-disable-next-line camelcase
-    const { name, points_multiplier, cvars } = req.body
-    const id = await registerMutator(name, points_multiplier, cvars)
+    const { name, points_multiplier, unlisted, cvars } = req.body
+    const id = await registerMutator(name, points_multiplier, unlisted, cvars)
     res.status(200).json({ id })
   } catch (error) {
     console.log('Error occurred while registering mutator: ', error)

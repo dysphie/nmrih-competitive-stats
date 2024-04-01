@@ -20,7 +20,7 @@ test('register mutator', async () => {
       { name: 'cvar1', value: '1' },
       { name: 'cvar2', value: '1' }
     ]
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   const mutator2 = await request.post('/mutators').send({
     name: 'Test Mutator 2',
@@ -29,7 +29,7 @@ test('register mutator', async () => {
       { name: 'cvar1', value: '2' },
       { name: 'cvar2', value: '2' }
     ]
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   expect(mutator1.status).toBe(200)
   expect(mutator1.body.id).toBe(1)
@@ -56,12 +56,12 @@ test('register tiers', async () => {
   const tier1 = await request.post('/tiers').send({
     name: 'Test Tier 1',
     points: 1
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   const tier2 = await request.post('/tiers').send({
     name: 'Test Tier 2',
     points: 2
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   expect(tier1.status).toBe(200)
   expect(tier1.body.id).toBe(1)
@@ -82,12 +82,12 @@ test('register players', async () => {
   const player1 = await request.post('/players').send({
     name: 'Test Player 1',
     steam: '9223372036854775806'
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   const player2 = await request.post('/players').send({
     name: 'Test Player 2',
     steam: '9223372036854775807'
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   expect(player1.status).toBe(200)
   expect(player1.body.id).toBe(1)
@@ -117,14 +117,14 @@ test('register maps', async () => {
     file: 'nmo_test1',
     tier: 1,
     mutators: [1, 2]
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   const map2 = await request.post('/maps').send({
     name: 'Test Map 2',
     file: 'nmo_test2',
     tier: 2,
     mutators: [1, 2]
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   expect(map1.status).toBe(200)
   expect(map1.body.id).toBe(1)
@@ -158,12 +158,12 @@ test('update map', async () => {
   const res = await request.put('/maps/2').send({
     name: 'Updated Map',
     tier: 1
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
   expect(res.status).toBe(204)
 })
 
 test('delete map', async () => {
-  const res = await request.delete('/maps/2').set('Authentication', adminToken)
+  const res = await request.delete('/maps/2').set('authorization', adminToken)
   expect(res.status).toBe(204)
 })
 
@@ -171,7 +171,7 @@ test('register round', async () => {
   const rounds = await request.post('/rounds').send({
     map: 1,
     mutators: [1, 2]
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   expect(rounds.status).toBe(200)
   expect(rounds.body.id).toBe(1)
@@ -198,7 +198,7 @@ test('register performance', async () => {
     extraction_time: 300,
     presence: 100.0,
     exp_earned: 1000
-  }).set('Authentication', adminToken)
+  }).set('authorization', adminToken)
 
   expect(performance.status).toBe(200)
   expect(performance.body.id).toBe(1)
@@ -247,7 +247,7 @@ test('register kills', async () => {
     ]
   }
 
-  const response = await request.post('/kills').send(kills).set('Authentication', adminToken)
+  const response = await request.post('/kills').send(kills).set('authorization', adminToken)
 
   expect(response.status).toBe(200)
 })

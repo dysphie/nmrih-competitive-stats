@@ -29,6 +29,9 @@ await createTables()
 app.use(limiter)
 app.use(express.json())
 
+app.put('*', admin)
+app.patch('*', admin)
+app.delete('*', admin)
 app.post('*', admin)
 
 app.use('/tiers', tiers)

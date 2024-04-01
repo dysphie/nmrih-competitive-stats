@@ -60,6 +60,7 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS mutator (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
+        unlisted BOOLEAN NOT NULL,
         points_multiplier DOUBLE NOT NULL
       );
     `)
@@ -423,11 +424,11 @@ const registerPerformance = async (playerId, roundId, endReason, kills, deaths, 
   return performance.insertId
 }
 
-const registerMutator = async (name, pointsMultiplier, cvars) => {
+const registerMutator = async (name, pointsMultiplier, unlisted, cvars) => {
   const db = await pool.getConnection()
   try {
     await db.beginTransaction()
-    const [mutator] = await db.execute('INSERT INTO mutator (name, points_multiplier) VALUES (?, ?)', [name, pointsMultiplier])
+    const [mutator] = await db.execute('INSERT INTO mutator (name, points_multiplier, unlisted) VALUES (?, ?, ?)', [name, pointsMultiplier, unlisted])
     const mutatorId = mutator.insertId
 
     for (const cvar of cvars) {
@@ -490,7 +491,7 @@ const getTiers = async () => {
 }
 
 const getMutators = async () => {
-  const [mutators] = await pool.query('SELECT * FROM mutator')
+  const [mutators] = await pool.query('SELECT * FROM mutator WHERE unlisted = false;')
   return mutators
 }
 
