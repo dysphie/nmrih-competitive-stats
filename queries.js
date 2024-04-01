@@ -187,7 +187,7 @@ const createTables = async () => {
 // FIXME: this is missing the 'mutators' field returned by getRound
 const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = null, mapId = null) => {
   const conn = await pool.getConnection()
-  let rounds, performances
+  let rounds, performances, mutators
 
   try {
     const queryParams = []
@@ -237,6 +237,20 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
         player AS pl ON p.player_id = pl.id
       WHERE
         p.round_id IN (?)
+    `, [roundIds]);
+
+    // Fetch mutators for each round
+    [mutators] = await conn.query(`
+      SELECT 
+        rm.round_id,
+        mu.id, 
+        mu.name
+      FROM 
+        round_mutator AS rm
+      JOIN 
+        mutator AS mu ON rm.mutator_id = mu.id
+      WHERE
+        rm.round_id IN (?)
     `, [roundIds])
   } finally {
     conn.release()
@@ -247,7 +261,8 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
       id: round.id,
       created_at: round.created_at,
       map: { id: round.map_id, name: round.map_name, file: round.map_file },
-      performances: []
+      performances: [],
+      mutators: []
     })
     return acc
   }, new Map())
@@ -267,6 +282,18 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
       extraction_time: performance.extraction_time,
       presence: performance.presence,
       player: { id: performance.player_id, name: performance.player_name }
+    })
+  })
+
+  mutators.forEach(mutator => {
+    const roundData = history.get(mutator.round_id)
+    if (!roundData) {
+      console.error(`Got mutator for uncollected round ID ${mutator.round_id}`)
+      return
+    }
+    roundData.mutators.push({
+      id: mutator.id,
+      name: mutator.name
     })
   })
 
