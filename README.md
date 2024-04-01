@@ -17,7 +17,7 @@ Quick summary
 | POST   | `/maps`              | `{ name, file, tier }`                                                                                    | Register a new map                                    |
 | GET    | `/maps`              | `{ q }`                                                                                                   | Get a list of maps whose name partially matches the query |
 | GET    | `/maps/:id`          |                                                                                                           | Get a map by ID                                       |
-| POST   | `/rounds`            | `{ map }`                                                                                                 | Register a new played round                           |
+| POST   | `/rounds`            | `{ map, mutators: [ id, ... ] }`                                                                                                 | Register a new played round                           |
 | GET    | `/rounds`            | `{ offset, limit, player, map, sort }`                                                                    | Get a list of rounds based on filters and sort order  |
 | GET    | `/rounds/:id`        |                                                                                                           | Get a round by ID                                     |
 | POST   | `/performances`      | `{ player, round, end_reason, kills, deaths, damage_taken, extraction_time, presence, exp_earned }`     | Register a new player performance for a given round   |
