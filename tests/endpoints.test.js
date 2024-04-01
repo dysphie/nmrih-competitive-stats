@@ -121,7 +121,8 @@ test('register maps', async () => {
   const map2 = await request.post('/maps').send({
     name: 'Test Map 2',
     file: 'nmo_test2',
-    tier: 2
+    tier: 2,
+    mutator: 1
   }).set('Authentication', adminToken)
 
   expect(map1.status).toBe(200)
@@ -131,9 +132,9 @@ test('register maps', async () => {
 })
 
 test('get maps', async () => {
-  const map = await request.get('/maps')
-  expect(map.status).toBe(200)
-  expect(map.body.length).toBe(2)
+  const maps = await request.get('/maps')
+  expect(maps.status).toBe(200)
+  expect(maps.body.length).toBe(2)
 })
 
 test('get map by name', async () => {
@@ -149,6 +150,19 @@ test('get map by id', async () => {
   expect(map.body.name).toBe('Test Map 1')
   expect(map.body.file).toBe('nmo_test1')
   expect(map.body.tier_id).toBe(1)
+})
+
+test('update map', async () => {
+  const res = await request.put('/maps/2').send({
+    name: 'Updated Map',
+    tier: 1
+  }).set('Authentication', adminToken)
+  expect(res.status).toBe(204)
+})
+
+test('delete map', async () => {
+  const res = await request.delete('/maps/2').set('Authentication', adminToken)
+  expect(res.status).toBe(204)
 })
 
 test('register round', async () => {

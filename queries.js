@@ -20,8 +20,8 @@ const dropAll = async () => {
 
     // drop other tables
     await db.execute('DROP TABLE IF EXISTS mutator_cvar')
-    await db.execute('DROP TABLE IF EXISTS mutator')
     await db.execute('DROP TABLE IF EXISTS map')
+    await db.execute('DROP TABLE IF EXISTS mutator')
     await db.execute('DROP TABLE IF EXISTS map_tier')
     await db.execute('DROP TABLE IF EXISTS player')
 
@@ -56,21 +56,23 @@ const createTables = async () => {
     `)
 
     await db.execute(`
+      CREATE TABLE IF NOT EXISTS mutator (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        points_multiplier DOUBLE NOT NULL
+      );
+    `)
+
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS map (
         id INT AUTO_INCREMENT PRIMARY KEY,
         file VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         tier_id INT NOT NULL,
+        base_mutator_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (base_mutator_id) REFERENCES mutator(id),
         FOREIGN KEY (tier_id) REFERENCES map_tier(id)
-      );
-    `)
-
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS mutator (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        points_multiplier DOUBLE NOT NULL
       );
     `)
 
@@ -354,9 +356,17 @@ const registerPlayer = async (steamId, name) => {
   return player.insertId
 }
 
-const registerMap = async (file, name, tierId) => {
-  const [map] = await pool.query('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tierId])
+const registerMap = async (file, name, tierId, baseMutatorId = null) => {
+  const [map] = await pool.query('INSERT INTO map (file, name, tier_id, base_mutator_id) VALUES (?, ?, ?, ?)', [file, name, tierId, baseMutatorId])
   return map.insertId
+}
+
+const deleteMap = async (id) => {
+  await pool.query('DELETE FROM map WHERE id = ?', [id])
+}
+
+const updateMap = async (id, file, name, tierId, baseMutatorId = null) => {
+  await pool.query('UPDATE map SET file = ?, name = ?, tier_id = ?, base_mutator_id = ? WHERE id = ?', [file, name, tierId, baseMutatorId, id])
 }
 
 const registerPerformance = async (playerId, roundId, endReason, kills, deaths, damageTaken, extractionTime, presence, expEarned) => {
@@ -593,6 +603,8 @@ export {
   getMap,
   dropAll,
   registerMap,
+  deleteMap,
+  updateMap,
   registerMutator,
   getKills
 }
