@@ -2,12 +2,12 @@ import 'dotenv/config'
 import { expect, test } from 'vitest'
 import app from '../server'
 import supertest from 'supertest'
-import { createTables, dropAll } from '../queries'
+import { createTables, dropAllTables } from '../queries'
 const request = supertest(app)
 
 // TODO: Continue coverage
 
-await dropAll()
+await dropAllTables()
 await createTables()
 
 const adminToken = process.env.ADMIN_AUTH_TOKEN
@@ -115,14 +115,15 @@ test('register maps', async () => {
   const map1 = await request.post('/maps').send({
     name: 'Test Map 1',
     file: 'nmo_test1',
-    tier: 1
+    tier: 1,
+    mutators: [1, 2]
   }).set('Authentication', adminToken)
 
   const map2 = await request.post('/maps').send({
     name: 'Test Map 2',
     file: 'nmo_test2',
     tier: 2,
-    mutator: 1
+    mutators: [1, 2]
   }).set('Authentication', adminToken)
 
   expect(map1.status).toBe(200)
@@ -150,6 +151,7 @@ test('get map by id', async () => {
   expect(map.body.name).toBe('Test Map 1')
   expect(map.body.file).toBe('nmo_test1')
   expect(map.body.tier_id).toBe(1)
+  expect(map.body.mutators.length).toBe(2)
 })
 
 test('update map', async () => {

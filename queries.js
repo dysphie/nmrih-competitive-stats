@@ -2,7 +2,7 @@ import pool from './database.js'
 
 // TODO: make <resource>_id be returned as just <resource>
 
-const dropAll = async () => {
+const dropAllTables = async () => {
   const db = await pool.getConnection()
   try {
     await db.beginTransaction()
@@ -15,13 +15,14 @@ const dropAll = async () => {
     // drop tables with dependencies first
     await db.execute('DROP TABLE IF EXISTS npc_kill')
     await db.execute('DROP TABLE IF EXISTS round_mutator')
+    await db.execute('DROP TABLE IF EXISTS map_mutator')
     await db.execute('DROP TABLE IF EXISTS performance')
     await db.execute('DROP TABLE IF EXISTS round')
 
     // drop other tables
     await db.execute('DROP TABLE IF EXISTS mutator_cvar')
-    await db.execute('DROP TABLE IF EXISTS map')
     await db.execute('DROP TABLE IF EXISTS mutator')
+    await db.execute('DROP TABLE IF EXISTS map')
     await db.execute('DROP TABLE IF EXISTS map_tier')
     await db.execute('DROP TABLE IF EXISTS player')
 
@@ -69,9 +70,7 @@ const createTables = async () => {
         file VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         tier_id INT NOT NULL,
-        base_mutator_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (base_mutator_id) REFERENCES mutator(id),
         FOREIGN KEY (tier_id) REFERENCES map_tier(id)
       );
     `)
@@ -111,6 +110,17 @@ const createTables = async () => {
         FOREIGN KEY (round_id) REFERENCES round(id),
         FOREIGN KEY (player_id) REFERENCES player(id),
         UNIQUE (player_id, round_id)
+      );
+    `)
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS map_mutator (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        map_id INT NOT NULL,
+        mutator_id INT NOT NULL,
+        FOREIGN KEY (map_id) REFERENCES map(id),
+        FOREIGN KEY (mutator_id) REFERENCES mutator(id),
+        UNIQUE (map_id, mutator_id)
       );
     `)
 
@@ -356,17 +366,51 @@ const registerPlayer = async (steamId, name) => {
   return player.insertId
 }
 
-const registerMap = async (file, name, tierId, baseMutatorId = null) => {
-  const [map] = await pool.query('INSERT INTO map (file, name, tier_id, base_mutator_id) VALUES (?, ?, ?, ?)', [file, name, tierId, baseMutatorId])
-  return map.insertId
+const registerMap = async (file, name, tierId, mutators = []) => {
+  const db = await pool.getConnection()
+  try {
+    await db.beginTransaction()
+    const [map] = await db.execute('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tierId])
+    const mapId = map.insertId
+
+    for (const mutatorId of mutators) {
+      await db.execute('INSERT INTO map_mutator (map_id, mutator_id) VALUES (?, ?)', [mapId, mutatorId])
+    }
+
+    await db.commit()
+    return mapId
+  } catch (error) {
+    await db.rollback()
+    throw error
+  } finally {
+    db.release()
+  }
 }
 
 const deleteMap = async (id) => {
-  await pool.query('DELETE FROM map WHERE id = ?', [id])
+  const db = await pool.getConnection()
+  try {
+    await db.beginTransaction()
+
+    const [mutators] = await db.execute('DELETE FROM map_mutator WHERE map_id = ?', [id])
+    const [maps] = await db.execute('DELETE FROM map WHERE id = ?', [id])
+
+    const deletedRows = mutators.affectedRows + maps.affectedRows
+
+    await db.commit()
+
+    return deletedRows > 0
+  } catch (error) {
+    await db.rollback()
+    throw error
+  } finally {
+    db.release()
+  }
 }
 
-const updateMap = async (id, file, name, tierId, baseMutatorId = null) => {
-  await pool.query('UPDATE map SET file = ?, name = ?, tier_id = ?, base_mutator_id = ? WHERE id = ?', [file, name, tierId, baseMutatorId, id])
+const updateMap = async (id, file, name, tierId) => {
+  // TODO: Support changing mutators
+  await pool.query('UPDATE map SET file = ?, name = ?, tier_id = ? WHERE id = ?', [file, name, tierId, id])
 }
 
 const registerPerformance = async (playerId, roundId, endReason, kills, deaths, damageTaken, extractionTime, presence, expEarned) => {
@@ -452,7 +496,21 @@ const getMutators = async () => {
 
 const getMap = async (id) => {
   const [maps] = await pool.query('SELECT * FROM map WHERE id = ? LIMIT 1;', [id])
-  return maps.length > 0 ? maps[0] : null
+  if (maps.length === 0) return null
+
+  const map = maps[0]
+
+  // fetch associated mutators
+  const [mutators] = await pool.query(`
+    SELECT m.id, m.name
+    FROM map_mutator AS mm
+    JOIN mutator AS m ON mm.mutator_id = m.id
+    WHERE mm.map_id = ?
+  `, [id])
+
+  map.mutators = mutators
+
+  return map
 }
 
 const getMutator = async (id) => {
@@ -601,7 +659,7 @@ export {
   registerTier,
   getPlayer,
   getMap,
-  dropAll,
+  dropAllTables,
   registerMap,
   deleteMap,
   updateMap,

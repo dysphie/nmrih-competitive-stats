@@ -8,7 +8,8 @@ router.post('/', [
   body('file').isLength({ min: 1 }),
   body('name').isLength({ min: 1 }),
   body('tier').isInt({ min: 1 }),
-  body('base_mutator_id').optional().isInt({ min: 1 })
+  body('mutators').default([]).isArray(),
+  body('mutators.*').isInt()
 ], async (req, res) => {
   const errors = validationResult(req)
 
@@ -18,8 +19,8 @@ router.post('/', [
 
   try {
     // eslint-disable-next-line camelcase
-    const { file, name, tier, base_mutator_id } = req.body
-    const id = await registerMap(file, name, tier, base_mutator_id)
+    const { file, name, tier, mutators } = req.body
+    const id = await registerMap(file, name, tier, mutators)
     res.status(200).json({ id })
   } catch (error) {
     console.log('Error occurred while registering map: ', error)
@@ -80,8 +81,8 @@ router.delete('/:id', [
 
   const { id } = req.params
   try {
-    await deleteMap(id)
-    res.sendStatus(204)
+    const mapDeleted = await deleteMap(id)
+    res.sendStatus(mapDeleted ? 204 : 404)
   } catch (error) {
     console.error(error)
     res.sendStatus(500)
