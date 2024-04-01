@@ -184,6 +184,7 @@ const createTables = async () => {
   }
 }
 
+// FIXME: this is missing the 'mutators' field returned by getRound
 const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = null, mapId = null) => {
   const conn = await pool.getConnection()
   let rounds, performances
@@ -217,14 +218,15 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
     query += ' ORDER BY r.created_at ' + (ascending ? 'ASC' : 'DESC')
 
     query += ' LIMIT ? OFFSET ?'
-    queryParams.push(limit, offset)
+    queryParams.push(limit, offset);
 
-    ;[rounds] = await conn.query(query, queryParams)
+    [rounds] = await conn.query(query, queryParams)
 
     if (rounds.length < 1) return {}
 
-    const roundIds = rounds.map(r => r.id)
-      ;[performances] = await conn.query(`
+    const roundIds = rounds.map(r => r.id);
+
+    [performances] = await conn.query(`
       SELECT 
         p.*, 
         pl.name AS player_name,
@@ -291,9 +293,28 @@ const getPlayer = async (id) => {
   return players.length > 0 ? players[0] : null
 }
 
-const registerRound = async (mapId) => {
-  const [round] = await pool.query('INSERT INTO round (map_id) VALUES (?);', [mapId])
-  return round.insertId
+const registerRound = async (mapId, mutators) => {
+  const db = await pool.getConnection()
+  try {
+    await db.beginTransaction()
+    const [round] = await db.execute('INSERT INTO round (map_id) VALUES (?);', [mapId])
+    const roundId = round.insertId
+
+    // TODO: Consider ditching normalization here and storing mutator IDs as an array in round.
+    // Enables quick search of rounds with identical mutators but compromises referential integrity
+
+    for (const mutatorId of mutators) {
+      await db.execute('INSERT INTO round_mutator (round_id, mutator_id) VALUES (?, ?)', [roundId, mutatorId])
+    }
+
+    await db.commit()
+    return roundId
+  } catch (error) {
+    await db.rollback()
+    throw error
+  } finally {
+    db.release()
+  }
 }
 
 const registerTier = async (name, points) => {
@@ -443,7 +464,7 @@ const getLeaderboard = async (type, limit, offset) => {
 
 const getRound = async (roundId) => {
   const conn = await pool.getConnection()
-  let roundData, performances
+  let roundData, performances, mutators
 
   try {
     const query = `
@@ -459,10 +480,9 @@ const getRound = async (roundId) => {
         r.id = ?
     `;
 
-    // Execute the query
     [roundData] = await conn.query(query, [roundId])
 
-    if (roundData.length < 1) return null; // Return null if round not found
+    if (roundData.length < 1) return null;
 
     // Fetch performances for the round
     [performances] = await conn.query(`
@@ -476,6 +496,19 @@ const getRound = async (roundId) => {
         player AS pl ON p.player_id = pl.id
       WHERE
         p.round_id = ?
+    `, [roundId]);
+
+    // Fetch mutators for the round
+    [mutators] = await conn.query(`
+      SELECT 
+        mu.id, 
+        mu.name
+      FROM 
+        round_mutator AS rm
+      JOIN 
+        mutator AS mu ON rm.mutator_id = mu.id
+      WHERE
+        rm.round_id = ?
     `, [roundId])
   } finally {
     conn.release()
@@ -501,6 +534,10 @@ const getRound = async (roundId) => {
         id: performance.player_id,
         name: performance.player_name
       }
+    })),
+    mutators: mutators.map(mutator => ({
+      id: mutator.id,
+      name: mutator.name
     }))
   }
 

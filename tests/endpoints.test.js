@@ -153,11 +153,22 @@ test('get map by id', async () => {
 
 test('register round', async () => {
   const rounds = await request.post('/rounds').send({
-    map: 1
+    map: 1,
+    mutators: [1, 2]
   }).set('Authentication', adminToken)
 
   expect(rounds.status).toBe(200)
   expect(rounds.body.id).toBe(1)
+})
+
+test('get round by id', async () => {
+  const rounds = await request.get('/rounds/1')
+
+  expect(rounds.status).toBe(200)
+  expect(rounds.body.id).toBe(1)
+  expect(rounds.body.mutators.length).toBe(2)
+  expect(rounds.body.mutators[0].id).toBe(1)
+  expect(rounds.body.mutators[1].id).toBe(2)
 })
 
 test('register performance', async () => {
@@ -227,7 +238,7 @@ test('register kills', async () => {
 
 test('get kills', async () => {
   const kills = await request.get('/players/1/kills').set('Content-Type', 'application/json')
-  console.log(JSON.stringify(kills.body))
+
   expect(kills.status).toBe(200)
   expect(kills.body.length).toBe(2)
   expect(kills.body[0].weapon).toBe(1)

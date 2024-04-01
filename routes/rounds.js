@@ -5,7 +5,9 @@ import { getRound, getRounds, registerRound } from '../queries.js'
 const router = express.Router()
 
 router.post('/', [
-  body('map').isInt({ min: 1 })
+  body('map').isInt({ min: 1 }),
+  body('mutators').default([]).isArray(),
+  body('mutators.*').isInt()
 ], async (req, res) => {
   const errors = validationResult(req)
 
@@ -13,10 +15,10 @@ router.post('/', [
     return res.status(400).json({ errors: errors.array() })
   }
 
-  const { map } = req.body
+  const { map, mutators } = req.body
 
   try {
-    const id = await registerRound(map)
+    const id = await registerRound(map, mutators)
     res.status(200).json({ id })
   } catch (error) {
     console.log('Error occurred while registering round: ', error)
