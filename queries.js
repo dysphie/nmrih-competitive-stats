@@ -131,11 +131,13 @@ const createTables = async () => {
     //   );
     // `)
 
+    // todo: weapon_id as foreign ref
     await db.execute(`
       CREATE TABLE IF NOT EXISTS npc_kill (
         player_id INT NOT NULL,
         npc_type INT NOT NULL,
         hitgroup INT NOT NULL,
+        weapon_id INT NOT NULL,
         performance_id INT NOT NULL,
         FOREIGN KEY (performance_id) REFERENCES performance(id),
         FOREIGN KEY (player_id) REFERENCES player(id)
@@ -346,7 +348,7 @@ const registerKills = async (performanceId, kills) => {
     await db.beginTransaction()
 
     for (const kill of kills) {
-      await db.execute('INSERT INTO npc_kill (performance_id, player_id, npc_type, hitgroup) VALUES (?, ?, ?, ?)', [performanceId, kill.player, kill.npc_type, kill.hitgroup])
+      await db.execute('INSERT INTO npc_kill (performance_id, player_id, npc_type, hitgroup, weapon_id) VALUES (?, ?, ?, ?, ?)', [performanceId, kill.player, kill.npc_type, kill.hitgroup, kill.weapon])
     }
 
     await db.commit()
@@ -356,6 +358,16 @@ const registerKills = async (performanceId, kills) => {
   } finally {
     db.release()
   }
+}
+
+const getKills = async (playerId) => {
+  const [kills] = await pool.query(`
+    SELECT weapon_id AS weapon, COUNT(*) AS kill_count 
+      FROM npc_kill 
+      WHERE player_id = ? 
+      GROUP BY weapon_id 
+      ORDER BY kill_count DESC`, [playerId])
+  return kills
 }
 
 const getKillDeathRatio = async (playerId) => {
@@ -517,5 +529,6 @@ export {
   getMap,
   dropAll,
   registerMap,
-  registerMutator
+  registerMutator,
+  getKills
 }

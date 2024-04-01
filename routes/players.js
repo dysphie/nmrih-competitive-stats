@@ -1,5 +1,5 @@
 import express from 'express'
-import { getPlayer, registerPlayer, searchPlayers } from '../queries.js'
+import { getKills, getPlayer, registerPlayer, searchPlayers } from '../queries.js'
 import { body, param, query, validationResult } from 'express-validator'
 
 const router = express.Router()
@@ -63,6 +63,31 @@ router.get('/:id', [
     res.status(200).json(player)
   } catch (error) {
     console.log('Error occurred while fetching player:', error)
+    res.sendStatus(500)
+  }
+})
+
+router.get('/:id/kills', [
+  param('id').isInt({ min: 1 }).toInt()
+], async (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() })
+  }
+
+  console.log('HELLO FROM KILLS')
+  const { id } = req.params
+  const player = await getPlayer(id)
+
+  if (!player) {
+    return res.sendStatus(404)
+  }
+
+  try {
+    const kills = await getKills(id)
+    res.status(200).json(kills)
+  } catch (error) {
+    console.log('Error occurred while fetching kills:', error)
     res.sendStatus(500)
   }
 })

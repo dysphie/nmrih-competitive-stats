@@ -1,6 +1,6 @@
 import express from 'express'
 import { param, query, validationResult } from 'express-validator'
-import { getLeaderboard, getLeaderboardAroundPlayer } from '../queries'
+import { getLeaderboard, getLeaderboardAroundPlayer } from '../queries.js'
 
 const router = express.Router()
 

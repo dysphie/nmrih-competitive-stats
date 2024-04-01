@@ -3,11 +3,13 @@ import { body, validationResult } from 'express-validator'
 import { registerKills } from '../queries.js'
 
 const router = express.Router()
+
 router.post('/', [
   body('performance').isInt({ min: 1 }),
   body('kills').isArray(),
   body('kills.*.player').isInt(),
   body('kills.*.npc_type').isInt(),
+  body('kills.*.weapon').isInt(),
   body('kills.*.hitgroup').isInt()
 ], async (req, res) => {
   const errors = validationResult(req)

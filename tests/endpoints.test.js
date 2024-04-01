@@ -211,15 +211,27 @@ test('get leaderboard (kdr)', async () => {
 })
 
 test('register kills', async () => {
-  const killsData = {
+  const kills = {
     performance: 1,
     kills: [
-      { player: 1, npc_type: 2, hitgroup: 3 },
-      { player: 2, npc_type: 3, hitgroup: 1 }
+      { player: 1, npc_type: 2, hitgroup: 3, weapon: 1 },
+      { player: 1, npc_type: 2, hitgroup: 3, weapon: 1 },
+      { player: 1, npc_type: 2, hitgroup: 3, weapon: 2 }
     ]
   }
 
-  const response = await request.post('/kills').send(killsData).set('Authentication', adminToken)
+  const response = await request.post('/kills').send(kills).set('Authentication', adminToken)
 
   expect(response.status).toBe(200)
+})
+
+test('get kills', async () => {
+  const kills = await request.get('/players/1/kills').set('Content-Type', 'application/json')
+  console.log(JSON.stringify(kills.body))
+  expect(kills.status).toBe(200)
+  expect(kills.body.length).toBe(2)
+  expect(kills.body[0].weapon).toBe(1)
+  expect(kills.body[0].kill_count).toBe('2') // todo: do we rly want bigint support here?
+  expect(kills.body[1].weapon).toBe(2)
+  expect(kills.body[1].kill_count).toBe('1')
 })
