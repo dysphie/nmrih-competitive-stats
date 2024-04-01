@@ -14,7 +14,7 @@ Quick summary
 | GET    | `/players`           | `{ q }`                                                                                                   | Get a list of players whose name partially matches the query |
 | GET    | `/players/:id`       |                                                                                                           | Get player by ID                                      |
 | GET    | `/players/:id/kills` |                                                                                                           | Get player kill stats                   |
-| POST   | `/maps`              | `{ name, file, tier }`                                                                                    | Register a new map                                    |
+| POST   | `/maps`              | `{ name, file, tier, mutators: [ id, ... ] }`                                                                                    | Register a new map                                    |
 | GET    | `/maps`              | `{ q }`                                                                                                   | Get a list of maps whose name partially matches the query |
 | GET    | `/maps/:id`          |                                                                                                           | Get a map by ID                                       |
 | POST   | `/rounds`            | `{ map, mutators: [ id, ... ] }`                                                                                                 | Register a new played round                           |
