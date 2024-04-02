@@ -1,6 +1,19 @@
 import pool from './database.js'
 
 // TODO: make <resource>_id be returned as just <resource>
+// TODO: Review usage or missing usage of getConnection
+
+const disableAllTiers = async () => {
+  await pool.query('UPDATE map_tier SET enabled = FALSE')
+}
+
+const disableAllMutators = async () => {
+  await pool.query('UPDATE mutator SET enabled = FALSE')
+}
+
+const disableAllMaps = async () => {
+  await pool.query('UPDATE map SET enabled = FALSE')
+}
 
 const dropAllTables = async () => {
   const db = await pool.getConnection()
@@ -51,16 +64,18 @@ const createTables = async () => {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS map_tier (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        points INT NOT NULL CHECK (points >= 0)
+        name VARCHAR(255) UNIQUE NOT NULL,
+        points INT NOT NULL CHECK (points >= 0),
+        enabled BOOLEAN DEFAULT TRUE NOT NULL
       );
     `)
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS mutator (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
+        name VARCHAR(255) UNIQUE NOT NULL,
         unlisted BOOLEAN NOT NULL,
+        enabled BOOLEAN DEFAULT TRUE NOT NULL,
         points_multiplier DOUBLE NOT NULL
       );
     `)
@@ -69,10 +84,10 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS map (
         id INT AUTO_INCREMENT PRIMARY KEY,
         file VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
         tier_id INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (tier_id) REFERENCES map_tier(id)
+        FOREIGN KEY (tier_id) REFERENCES map_tier(id),
+        enabled BOOLEAN DEFAULT TRUE NOT NULL
       );
     `)
 
@@ -367,11 +382,11 @@ const registerPlayer = async (steamId, name) => {
   return player.insertId
 }
 
-const registerMap = async (file, name, tierId, mutators = []) => {
+const registerMap = async (file, tierId, mutators = []) => {
   const db = await pool.getConnection()
   try {
     await db.beginTransaction()
-    const [map] = await db.execute('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tierId])
+    const [map] = await db.execute('INSERT INTO map (file, tier_id) VALUES (?, ?)', [file, tierId])
     const mapId = map.insertId
 
     for (const mutatorId of mutators) {
@@ -665,5 +680,8 @@ export {
   deleteMap,
   updateMap,
   registerMutator,
+  disableAllTiers,
+  disableAllMutators,
+  disableAllMaps,
   getKills
 }

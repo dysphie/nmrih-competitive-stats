@@ -1,0 +1,59 @@
+maps:
+  - name: nmo_cabin
+    tier: very easy
+
+  - name: nmo_broadway
+    tier: very easy
+
+  - name: nmo_tenkinoko_welkin_t1_3
+    mutators: 
+      - tenkinoko stage 1
+    tier: hard
+
+  - name: nmo_tenkinoko_welkin_t1_3
+    mutators: 
+      - tenkinoko stage 2
+    tier: very hard
+
+tiers:
+  - name: very easy
+    points: 1
+
+  - name: easy
+    points: 15
+
+  - name: moderate
+    points: 30
+
+  - name: challenging
+    points: 60
+
+  - name: hard
+    points: 100
+
+  - name: very hard
+    points: 150
+
+  - name: extreme
+    points: 200
+
+mutators:
+  - name: runners
+    description: All zombies are runners
+    cvars:
+      - runners_only 1
+
+  - name: no zombie respawning
+    description: Spawn brushes do not regenerate zombies
+    cvars:
+      - sv_spawn_regen_target 0
+
+  - name: tenkinoko stage 1
+    description: Enforces stage 1 in nmo_tenkinoko_welkin
+    cvars:
+      - sm_tenki_stage 1
+
+  - name: tenkinoko stage 2
+    description: Enforces stage 2 in nmo_tenkinoko_welkin
+    cvars:
+      - sm_tenki_stage 2
