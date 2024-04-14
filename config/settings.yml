@@ -6,13 +6,6 @@ maps:
     tier: very easy
 
   - name: nmo_tenkinoko_welkin_t1_3
-    mutators: 
-      - tenkinoko stage 1
-    tier: hard
-
-  - name: nmo_tenkinoko_welkin_t1_3
-    mutators: 
-      - tenkinoko stage 2
     tier: very hard
 
 tiers:
@@ -40,20 +33,31 @@ tiers:
 mutators:
   - name: runners
     description: All zombies are runners
+    points_multiplier: 0.0
     cvars:
       - runners_only 1
 
   - name: no zombie respawning
     description: Spawn brushes do not regenerate zombies
+    points_multiplier: 0.0
     cvars:
       - sv_spawn_regen_target 0
 
-  - name: tenkinoko stage 1
+  - name: sunny
     description: Enforces stage 1 in nmo_tenkinoko_welkin
+    points_multiplier: 0.0
     cvars:
       - sm_tenki_stage 1
+    maps: 
+      - nmo_tenkinoko_welkin_*
+    private: 1
 
-  - name: tenkinoko stage 2
+  - name: cloudy
     description: Enforces stage 2 in nmo_tenkinoko_welkin
+    points_multiplier: 2.0
     cvars:
       - sm_tenki_stage 2
+    maps: 
+      - nmo_tenkinoko_welkin_*
+    private: 1
+

@@ -1,0 +1,9 @@
+all-runners:
+  - map: nmo_cabin 
+    mutators: runners
+
+  - map: nmo_tenkinoko_welkin_t1_3 
+    mutators: runners sunny
+  
+  - map: nmo_tenkinoko_welkin_t1_3 
+    mutators: runners cloudy

@@ -75,7 +75,6 @@ router.get('/:id/kills', [
     return res.status(400).json({ errors: errors.array() })
   }
 
-  console.log('HELLO FROM KILLS')
   const { id } = req.params
   const player = await getPlayer(id)
 

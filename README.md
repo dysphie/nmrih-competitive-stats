@@ -5,7 +5,7 @@ Quick summary
 
 | Method | Endpoint             | Request Body                                                                                              | Description                                           |
 |--------|----------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| POST   | `/mutators`          | `{ name, unlisted, points_multiplier, cvars: [ { name, value }, ... ] }`                                            | Register a new mutator                                |
+| POST   | `/mutators`          | `{ name, points_multiplier, cvars: [ { name, value }, ... ] }`                                            | Register a new mutator                                |
 | GET    | `/mutators`          |                                                                                                           | Get a list of existing mutators                      |
 | GET    | `/mutators/:id`      |                                                                                                           | Get a mutator by ID                            |
 | POST   | `/tiers`             | `{ name, points }`                                                                                        | Register a new map tier                               |
@@ -14,7 +14,7 @@ Quick summary
 | GET    | `/players`           | `{ q }`                                                                                                   | Get a list of players whose name partially matches the query |
 | GET    | `/players/:id`       |                                                                                                           | Get player by ID                                      |
 | GET    | `/players/:id/kills` |                                                                                                           | Get player kill stats                   |
-| POST   | `/maps`              | `{ name, file, tier, mutators: [ id, ... ] }`                                                                                    | Register a new map                                    |
+| POST   | `/maps`              | `{ name, tier }`                                                                                    | Register a new map                                    |
 | GET    | `/maps`              | `{ q }`                                                                                                   | Get a list of maps whose name partially matches the query |
 | GET    | `/maps/:id`          |                                                                                                           | Get a map by ID                                       |
 | POST   | `/rounds`            | `{ map, mutators: [ id, ... ] }`                                                                                                 | Register a new played round                           |

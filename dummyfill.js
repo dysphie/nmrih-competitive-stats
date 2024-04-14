@@ -43,9 +43,9 @@ async function insertDummyData () {
     for (let i = 0; i < NUM_MAPS; i++) {
       const name = randomChars()
       await db.execute(`
-        INSERT INTO map (file, name, tier_id) 
-        VALUES (?, ?, ?)
-        `, [`nmo_${name}`, name.toUpperCase(), randomNum(1, NUM_MAP_TIERS)])
+        INSERT INTO map (name, tier_id) 
+        VALUES (?, ?)
+        `, [name, randomNum(1, NUM_MAP_TIERS)])
     }
 
     // Insert dummy modifiers
