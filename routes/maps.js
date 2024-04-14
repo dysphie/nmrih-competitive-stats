@@ -5,11 +5,8 @@ import { body, param, query, validationResult } from 'express-validator'
 const router = express.Router()
 
 router.post('/', [
-  body('file').isLength({ min: 1 }),
   body('name').isLength({ min: 1 }),
-  body('tier').isInt({ min: 1 }),
-  body('mutators').default([]).isArray(),
-  body('mutators.*').isInt()
+  body('tier').isLength({ min: 1 })
 ], async (req, res) => {
   const errors = validationResult(req)
 
@@ -19,8 +16,8 @@ router.post('/', [
 
   try {
     // eslint-disable-next-line camelcase
-    const { file, name, tier, mutators } = req.body
-    const id = await registerMap(file, name, tier, mutators)
+    const { name, tier, mutators } = req.body
+    const id = await registerMap(name, tier, mutators)
     res.status(200).json({ id })
   } catch (error) {
     console.log('Error occurred while registering map: ', error)
@@ -91,10 +88,8 @@ router.delete('/:id', [
 
 router.put('/:id', [
   param('id').isInt({ min: 1 }).toInt(),
-  body('file').optional().isLength({ min: 1 }),
   body('name').optional().isLength({ min: 1 }),
-  body('tier').optional().isInt({ min: 1 }),
-  body('base_mutator_id').optional().isInt({ min: 1 })
+  body('tier').optional().isLength({ min: 1 })
 ], async (req, res) => {
   const errors = validationResult(req)
 
@@ -104,9 +99,9 @@ router.put('/:id', [
 
   const { id } = req.params
   // eslint-disable-next-line camelcase
-  const { file, name, tier, base_mutator_id } = req.body
+  const { name, tier } = req.body
   try {
-    await updateMap(id, file, name, tier, base_mutator_id)
+    await updateMap(id, name, tier)
     res.sendStatus(204)
   } catch (error) {
     console.error(error)

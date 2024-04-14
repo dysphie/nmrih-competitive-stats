@@ -13,6 +13,7 @@ import leaderboards from './routes/leaderboards.js'
 import admin from './middleware/admin.js'
 
 import { rateLimit } from 'express-rate-limit'
+import { configureStatusMonitor } from './status.js'
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -26,6 +27,7 @@ const PORT = 3000
 
 await createTables()
 
+configureStatusMonitor(app)
 app.use(limiter)
 app.use(express.json())
 

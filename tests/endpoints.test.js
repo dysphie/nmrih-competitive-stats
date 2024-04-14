@@ -14,7 +14,7 @@ const adminToken = process.env.ADMIN_AUTH_TOKEN
 
 test('register mutator', async () => {
   const mutator1 = await request.post('/mutators').send({
-    name: 'Test Mutator 1',
+    name: 'mutator_1',
     points_multiplier: '1.0',
     cvars: [
       { name: 'cvar1', value: '1' },
@@ -23,7 +23,7 @@ test('register mutator', async () => {
   }).set('authorization', adminToken)
 
   const mutator2 = await request.post('/mutators').send({
-    name: 'Test Mutator 2',
+    name: 'mutator_2',
     points_multiplier: '2.0',
     cvars: [
       { name: 'cvar1', value: '2' },
@@ -49,17 +49,17 @@ test('get mutators by id', async () => {
 
   expect(map.status).toBe(200)
   expect(map.body.id).toBe(1)
-  expect(map.body.name).toBe('Test Mutator 1')
+  expect(map.body.name).toBe('mutator_1')
 })
 
 test('register tiers', async () => {
   const tier1 = await request.post('/tiers').send({
-    name: 'Test Tier 1',
+    name: 'tier_1',
     points: 1
   }).set('authorization', adminToken)
 
   const tier2 = await request.post('/tiers').send({
-    name: 'Test Tier 2',
+    name: 'tier_2',
     points: 2
   }).set('authorization', adminToken)
 
@@ -74,7 +74,7 @@ test('get tiers', async () => {
 
   expect(tiers.status).toBe(200)
   expect(tiers.body.length).toBe(2)
-  expect(tiers.body[0].name).toBe('Test Tier 1')
+  expect(tiers.body[0].name).toBe('tier_1')
   expect(tiers.body[0].points).toBe(1)
 })
 
@@ -113,17 +113,13 @@ test('get player by id', async () => {
 
 test('register maps', async () => {
   const map1 = await request.post('/maps').send({
-    name: 'Test Map 1',
-    file: 'nmo_test1',
-    tier: 1,
-    mutators: [1, 2]
+    name: 'map_1',
+    tier: 'tier_1'
   }).set('authorization', adminToken)
 
   const map2 = await request.post('/maps').send({
-    name: 'Test Map 2',
-    file: 'nmo_test2',
-    tier: 2,
-    mutators: [1, 2]
+    name: 'map_2',
+    tier: 'tier_2'
   }).set('authorization', adminToken)
 
   expect(map1.status).toBe(200)
@@ -138,26 +134,24 @@ test('get maps', async () => {
   expect(maps.body.length).toBe(2)
 })
 
-test('get map by name', async () => {
-  const maps = await request.get('/maps?q=Map 1')
+test('get map by partial name', async () => {
+  const maps = await request.get('/maps?q=p_1')
   expect(maps.status).toBe(200)
   expect(maps.body.length).toBe(1)
-  expect(maps.body[0].name).toBe('Test Map 1')
+  expect(maps.body[0].name).toBe('map_1')
 })
 
 test('get map by id', async () => {
   const map = await request.get('/maps/1')
   expect(map.status).toBe(200)
-  expect(map.body.name).toBe('Test Map 1')
-  expect(map.body.file).toBe('nmo_test1')
+  expect(map.body.name).toBe('map_1')
   expect(map.body.tier_id).toBe(1)
-  expect(map.body.mutators.length).toBe(2)
 })
 
 test('update map', async () => {
   const res = await request.put('/maps/2').send({
-    name: 'Updated Map',
-    tier: 1
+    name: 'test_map_2_updated',
+    tier: 'tier_1'
   }).set('authorization', adminToken)
   expect(res.status).toBe(204)
 })
@@ -261,4 +255,60 @@ test('get kills', async () => {
   expect(kills.body[0].kill_count).toBe('2') // todo: do we rly want bigint support here?
   expect(kills.body[1].weapon).toBe(2)
   expect(kills.body[1].kill_count).toBe('1')
+})
+
+test('get performances with same mutators', async () => {
+  const mutator1 = await request.post('/mutators').send({ name: 'mutator_abc', points_multiplier: '1.0', cvars: [] }).set('authorization', adminToken)
+  const mutator2 = await request.post('/mutators').send({ name: 'mutator_def', points_multiplier: '1.0', cvars: [] }).set('authorization', adminToken)
+
+  const round1 = await request.post('/rounds').send({ map: 1, mutators: [mutator1.body.id, mutator2.body.id] }).set('authorization', adminToken)
+  const round2 = await request.post('/rounds').send({ map: 1, mutators: [mutator1.body.id] }).set('authorization', adminToken)
+
+  // register first performance with [mut1, mut2]
+  const perf1 = await request.post('/performances').send({
+    player: 1,
+    round: round1.body.id,
+    end_reason: 'extracted',
+    kills: 10,
+    deaths: 2,
+    damage_taken: 500,
+    extraction_time: 300,
+    presence: 100.0,
+    exp_earned: 1000
+  }).set('authorization', adminToken)
+
+  // register second performance with [mut1, mut2]
+  const perf2 = await request.post('/performances').send({
+    player: 2,
+    round: round1.body.id,
+    end_reason: 'extracted',
+    kills: 10,
+    deaths: 2,
+    damage_taken: 500,
+    extraction_time: 300,
+    presence: 100.0,
+    exp_earned: 1000
+  }).set('authorization', adminToken)
+
+  // register third performance with [mut1]
+  await request.post('/performances').send({
+    player: 1,
+    round: round2.body.id,
+    end_reason: 'extracted',
+    kills: 10,
+    deaths: 2,
+    damage_taken: 500,
+    extraction_time: 300,
+    presence: 100.0,
+    exp_earned: 1000
+  }).set('authorization', adminToken)
+
+  // fetch performances where mutators = [mut1, mut2], should return the first 2
+  const perfs = await request.get(`/performances?mutators=${mutator1.body.id}&mutators=${mutator2.body.id}`)
+  console.log(perfs)
+
+  expect(perfs.status).toBe(200)
+  expect(perfs.body.length).toBe(2)
+  expect(perfs.body[0].id).toBe(perf1.body.id)
+  expect(perfs.body[1].id).toBe(perf2.body.id)
 })

@@ -1,6 +1,19 @@
 import pool from './database.js'
 
 // TODO: make <resource>_id be returned as just <resource>
+// TODO: Review usage or missing usage of getConnection
+
+const disableAllTiers = async () => {
+  await pool.query('UPDATE map_tier SET enabled = FALSE')
+}
+
+const disableAllMutators = async () => {
+  await pool.query('UPDATE mutator SET enabled = FALSE')
+}
+
+const disableAllMaps = async () => {
+  await pool.query('UPDATE map SET enabled = FALSE')
+}
 
 const dropAllTables = async () => {
   const db = await pool.getConnection()
@@ -51,16 +64,17 @@ const createTables = async () => {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS map_tier (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        points INT NOT NULL CHECK (points >= 0)
+        name VARCHAR(255) UNIQUE NOT NULL,
+        points INT NOT NULL CHECK (points >= 0),
+        enabled BOOLEAN DEFAULT TRUE NOT NULL
       );
     `)
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS mutator (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        unlisted BOOLEAN NOT NULL,
+        name VARCHAR(255) UNIQUE NOT NULL,
+        enabled BOOLEAN DEFAULT TRUE NOT NULL,
         points_multiplier DOUBLE NOT NULL
       );
     `)
@@ -68,11 +82,11 @@ const createTables = async () => {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS map (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        file VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         tier_id INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (tier_id) REFERENCES map_tier(id)
+        FOREIGN KEY (tier_id) REFERENCES map_tier(id),
+        enabled BOOLEAN DEFAULT TRUE NOT NULL
       );
     `)
 
@@ -207,7 +221,6 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
     let query = `
       SELECT 
         r.id, r.map_id, r.created_at, 
-        m.file AS map_file, 
         m.name AS map_name
       FROM 
         round AS r
@@ -273,7 +286,7 @@ const getRounds = async (limit = 10, offset = 0, ascending = true, playerId = nu
     acc.set(round.id, {
       id: round.id,
       created_at: round.created_at,
-      map: { id: round.map_id, name: round.map_name, file: round.map_file },
+      map: { id: round.map_id, name: round.map_name },
       performances: [],
       mutators: []
     })
@@ -367,15 +380,35 @@ const registerPlayer = async (steamId, name) => {
   return player.insertId
 }
 
-const registerMap = async (file, name, tierId, mutators = []) => {
+const registerMap = async (name, tierName, mutatorNames = []) => {
   const db = await pool.getConnection()
+
   try {
     await db.beginTransaction()
-    const [map] = await db.execute('INSERT INTO map (file, name, tier_id) VALUES (?, ?, ?)', [file, name, tierId])
-    const mapId = map.insertId
 
-    for (const mutatorId of mutators) {
-      await db.execute('INSERT INTO map_mutator (map_id, mutator_id) VALUES (?, ?)', [mapId, mutatorId])
+    const [tiers] = await db.execute(
+      'SELECT id FROM map_tier WHERE name = ? LIMIT 1;',
+      [tierName]
+    )
+
+    if (tiers.length < 1) throw new Error('Invalid tier ' + tierName)
+    const tierId = tiers[0].id
+
+    const [{ insertId: mapId }] = await db.execute(
+      'INSERT INTO map (name, tier_id) VALUES (?, ?)',
+      [name, tierId]
+    )
+
+    for (const mutatorName of mutatorNames) {
+      const [[{ id: mutatorId }]] = await db.execute(
+        'SELECT id FROM mutator WHERE name = ? LIMIT 1;',
+        [mutatorName]
+      )
+
+      await db.execute(
+        'INSERT INTO map_mutator (map_id, mutator_id) VALUES (?, ?)',
+        [mapId, mutatorId]
+      )
     }
 
     await db.commit()
@@ -409,9 +442,29 @@ const deleteMap = async (id) => {
   }
 }
 
-const updateMap = async (id, file, name, tierId) => {
-  // TODO: Support changing mutators
-  await pool.query('UPDATE map SET file = ?, name = ?, tier_id = ? WHERE id = ?', [file, name, tierId, id])
+const updateMap = async (id, name, tierName) => {
+  const db = await pool.getConnection()
+  try {
+    await db.beginTransaction()
+
+    if (tierName) {
+      const [tiers] = await db.execute('SELECT id FROM map_tier WHERE name = ? LIMIT 1;', [tierName])
+      if (!tiers || tiers.length < 1) throw new Error('Invalid tier ' + tierName)
+      const tierId = tiers[0].id
+      await db.execute('UPDATE map SET tier_id = ? WHERE id = ?', [tierId, id])
+    }
+
+    if (name) {
+      await db.execute('UPDATE map SET name = ? WHERE id = ?', [name, id])
+    }
+
+    await db.commit()
+  } catch (error) {
+    await db.rollback()
+    throw error
+  } finally {
+    db.release()
+  }
 }
 
 const registerPerformance = async (playerId, roundId, endReason, kills, deaths, damageTaken, extractionTime, presence, expEarned) => {
@@ -424,11 +477,11 @@ const registerPerformance = async (playerId, roundId, endReason, kills, deaths, 
   return performance.insertId
 }
 
-const registerMutator = async (name, pointsMultiplier, unlisted, cvars) => {
+const registerMutator = async (name, pointsMultiplier, cvars = [], supportedMaps = [], unsupportedMaps = []) => {
   const db = await pool.getConnection()
   try {
     await db.beginTransaction()
-    const [mutator] = await db.execute('INSERT INTO mutator (name, points_multiplier, unlisted) VALUES (?, ?, ?)', [name, pointsMultiplier, unlisted])
+    const [mutator] = await db.execute('INSERT INTO mutator (name, points_multiplier) VALUES (?, ?)', [name, pointsMultiplier])
     const mutatorId = mutator.insertId
 
     for (const cvar of cvars) {
@@ -491,7 +544,7 @@ const getTiers = async () => {
 }
 
 const getMutators = async () => {
-  const [mutators] = await pool.query('SELECT * FROM mutator WHERE unlisted = false;')
+  const [mutators] = await pool.query('SELECT id, name, points_multiplier FROM mutator;')
   return mutators
 }
 
@@ -540,6 +593,19 @@ const getPerformance = async (id) => {
   return performances.length > 0 ? performances[0] : null
 }
 
+const searchPerformances = async (mutatorIds = []) => {
+  const [performances] = await pool.query(`
+    SELECT p.*
+    FROM performance p
+    JOIN round_mutator rm ON p.round_id = rm.round_id
+    WHERE rm.mutator_id IN ?
+    GROUP BY p.id
+    HAVING COUNT(rm.mutator_id) = ?;
+  `, [[mutatorIds], mutatorIds.length])
+
+  return performances
+}
+
 const getLeaderboardAroundPlayer = async (type, playerId, radius) => {
   const [rank] = await pool.query('SELECT rank FROM ?? WHERE player_id = ?', ['leaderboard_' + type, playerId])
 
@@ -565,8 +631,7 @@ const getRound = async (roundId) => {
   try {
     const query = `
       SELECT 
-        r.id, r.map_id, r.created_at, 
-        m.file AS map_file, 
+        r.id, r.map_id, r.created_at,
         m.name AS map_name
       FROM 
         round AS r
@@ -615,8 +680,7 @@ const getRound = async (roundId) => {
     created_at: roundData[0].created_at,
     map: {
       id: roundData[0].map_id,
-      name: roundData[0].map_name,
-      file: roundData[0].map_file
+      name: roundData[0].map_name
     },
     performances: performances.map(performance => ({
       id: performance.id,
@@ -665,5 +729,9 @@ export {
   deleteMap,
   updateMap,
   registerMutator,
-  getKills
+  disableAllTiers,
+  disableAllMutators,
+  disableAllMaps,
+  getKills,
+  searchPerformances
 }

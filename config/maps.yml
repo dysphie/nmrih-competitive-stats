@@ -1,0 +1,9 @@
+- name: nmo_cabin
+  tier: very easy
+
+- name: nmo_broadway
+  tier: very easy
+
+- name: nmo_tenkinoko_welkin
+  tier: very hard
+  

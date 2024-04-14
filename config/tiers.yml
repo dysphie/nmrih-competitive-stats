@@ -1,0 +1,20 @@
+- name: very easy
+  points: 1
+
+- name: easy
+  points: 15
+
+- name: moderate
+  points: 30
+
+- name: challenging
+  points: 60
+
+- name: hard
+  points: 100
+
+- name: very hard
+  points: 150
+
+- name: extreme
+  points: 200
